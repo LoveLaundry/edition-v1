@@ -1,0 +1,127 @@
+<svg viewBox="0 0 700 438" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <rect x="0" y="0" width="700" height="438" fill="#fbfcfd"/>
+      <text x="14" y="16" font-size="7.5" fill="#8a8a91" letter-spacing="1.6" font-weight="600">CLIENT APPLICATIONS</text>
+
+      <!-- clients -->
+      <g>
+        <rect x="14" y="26" width="128" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="24" y="43" font-size="9.5" font-weight="700" fill="#0b0b0c">Laundry App</text>
+        <text x="24" y="56" font-size="7" fill="#6b6b72">quotations-ui</text>
+        <text x="24" y="68" font-size="7" fill="#6b6b72">React 19 · TypeScript</text>
+
+        <rect x="149" y="26" width="128" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="159" y="43" font-size="9.5" font-weight="700" fill="#0b0b0c">Shop Counter</text>
+        <text x="159" y="56" font-size="7" fill="#6b6b72">shop-app · :5174</text>
+        <text x="159" y="68" font-size="7" fill="#6b6b72">ll_shop_session</text>
+
+        <rect x="284" y="26" width="128" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="294" y="43" font-size="9.5" font-weight="700" fill="#0b0b0c">Hotel Desk</text>
+        <text x="294" y="56" font-size="7" fill="#6b6b72">hotel-app · :5175</text>
+        <text x="294" y="68" font-size="7" fill="#6b6b72">ll_hotel_session</text>
+
+        <rect x="419" y="26" width="128" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="429" y="43" font-size="9.5" font-weight="700" fill="#0b0b0c">Linen Room</text>
+        <text x="429" y="56" font-size="7" fill="#6b6b72">linen-room-app · :5176</text>
+        <text x="429" y="68" font-size="7" fill="#6b6b72">ll_linen_session</text>
+
+        <rect x="554" y="26" width="132" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="564" y="43" font-size="9.5" font-weight="700" fill="#0b0b0c">LoveMobi / public</text>
+        <text x="564" y="56" font-size="7" fill="#6b6b72">Flutter client</text>
+        <text x="564" y="68" font-size="7" fill="#6b6b72">public.lovelaundry.lk</text>
+      </g>
+
+      <!-- bus 1 -->
+      <line x1="14" y1="94" x2="686" y2="94" stroke="#cfcfd4" stroke-width="1" stroke-dasharray="3 2"/>
+      <line x1="78" y1="78" x2="78" y2="94" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="213" y1="78" x2="213" y2="94" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="348" y1="78" x2="348" y2="94" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="483" y1="78" x2="483" y2="94" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="620" y1="78" x2="620" y2="94" stroke="#9fb0c2" stroke-width="1"/>
+      <text x="350" y="90" font-size="7" fill="#6b6b72" text-anchor="middle" font-style="italic">HTTPS · JSON · Authorization: Bearer &lt;token&gt;</text>
+
+      <text x="14" y="120" font-size="7.5" fill="#8a8a91" letter-spacing="1.6" font-weight="600">SERVICES · PYTHON / FASTAPI</text>
+
+      <!-- services -->
+      <g>
+        <rect x="14" y="128" width="106" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="23" y="145" font-size="9" font-weight="700" fill="#ffffff">user-service</text>
+        <text x="23" y="158" font-size="6.8" fill="#dcdce0">auth · users</text>
+        <text x="23" y="169" font-size="6.8" fill="#dcdce0">laundries · members</text>
+        <text x="23" y="183" font-size="7" font-weight="700" fill="#c1121f">:8002</text>
+
+        <rect x="127" y="128" width="106" height="66" rx="3" fill="#0b0b0c" stroke="#c1121f" stroke-width="1.8"/>
+        <text x="136" y="145" font-size="9" font-weight="700" fill="#ffffff">bill_service</text>
+        <text x="136" y="158" font-size="6.8" fill="#dcdce0">operational core</text>
+        <text x="136" y="169" font-size="6.8" fill="#dcdce0">passes · bills · linen</text>
+        <text x="136" y="183" font-size="7" font-weight="700" fill="#c1121f">:8001</text>
+
+        <rect x="240" y="128" width="106" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="249" y="145" font-size="8.6" font-weight="700" fill="#ffffff">laundry-</text>
+        <text x="249" y="155" font-size="8.6" font-weight="700" fill="#ffffff">management</text>
+        <text x="249" y="169" font-size="6.8" fill="#dcdce0">accounting ledger</text>
+        <text x="249" y="183" font-size="6.8" fill="#dcdce0">payments · salary</text>
+
+        <rect x="353" y="128" width="106" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="362" y="145" font-size="8.6" font-weight="700" fill="#ffffff">quotation-</text>
+        <text x="362" y="155" font-size="8.6" font-weight="700" fill="#ffffff">service</text>
+        <text x="362" y="169" font-size="6.8" fill="#dcdce0">quotations · AI chat</text>
+
+        <rect x="466" y="128" width="106" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="475" y="145" font-size="9" font-weight="700" fill="#ffffff">worker-service</text>
+        <text x="475" y="158" font-size="6.8" fill="#dcdce0">workers</text>
+        <text x="475" y="169" font-size="6.8" fill="#dcdce0">attendance</text>
+
+        <rect x="579" y="128" width="107" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="588" y="145" font-size="9" font-weight="700" fill="#ffffff">love-ai</text>
+        <text x="588" y="158" font-size="6.8" fill="#dcdce0">AI assistant</text>
+        <text x="588" y="169" font-size="6.8" fill="#dcdce0">drafting · chat</text>
+      </g>
+
+      <!-- bus 2 -->
+      <line x1="14" y1="212" x2="686" y2="212" stroke="#cfcfd4" stroke-width="1" stroke-dasharray="3 2"/>
+      <line x1="67" y1="194" x2="67" y2="212" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="180" y1="194" x2="180" y2="212" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="293" y1="194" x2="293" y2="212" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="406" y1="194" x2="406" y2="212" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="519" y1="194" x2="519" y2="212" stroke="#9fb0c2" stroke-width="1"/>
+      <line x1="632" y1="194" x2="632" y2="212" stroke="#9fb0c2" stroke-width="1"/>
+      <text x="350" y="208" font-size="7" fill="#6b6b72" text-anchor="middle" font-style="italic">Motor / PyMongo · per-service credential · TLS</text>
+
+      <text x="14" y="234" font-size="7.5" fill="#8a8a91" letter-spacing="1.6" font-weight="600">DATA STORES · MONGODB</text>
+
+      <!-- databases -->
+      <g>
+        <rect x="14" y="242" width="210" height="76" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+        <text x="26" y="260" font-size="9" font-weight="700" fill="#0b0b0c">user_db</text>
+        <text x="26" y="275" font-size="7" fill="#6b6b72">users · laundries</text>
+        <text x="26" y="287" font-size="7" fill="#6b6b72">memberships</text>
+        <text x="26" y="299" font-size="7" fill="#6b6b72">client_accounts</text>
+        <text x="26" y="311" font-size="6.6" font-style="italic" fill="#8a8a91">owner: user-service</text>
+
+        <rect x="236" y="242" width="228" height="76" rx="3" fill="#f8f4ee" stroke="#c1121f"/>
+        <text x="248" y="260" font-size="9" font-weight="700" fill="#0b0b0c">operations database</text>
+        <text x="248" y="275" font-size="7" fill="#6b6b72">gate_passes · deliveries · bills</text>
+        <text x="248" y="287" font-size="7" fill="#6b6b72">linens · shop_bills · returns</text>
+        <text x="248" y="299" font-size="7" fill="#6b6b72">day_close · dispatch · matrix</text>
+        <text x="248" y="311" font-size="6.6" font-style="italic" fill="#8a8a91">owner: bill_service</text>
+
+        <rect x="476" y="242" width="210" height="76" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+        <text x="488" y="260" font-size="9" font-weight="700" fill="#0b0b0c">accounting database</text>
+        <text x="488" y="275" font-size="7" fill="#6b6b72">customers · transactions</text>
+        <text x="488" y="287" font-size="7" fill="#6b6b72">payments · expenses</text>
+        <text x="488" y="299" font-size="7" fill="#6b6b72">employees · items · salary</text>
+        <text x="488" y="311" font-size="6.6" font-style="italic" fill="#8a8a91">owner: laundry-management</text>
+      </g>
+
+      <!-- legend -->
+      <line x1="14" y1="336" x2="686" y2="336" stroke="#ececee"/>
+      <rect x="14" y="350" width="10" height="10" fill="#0b0b0c"/>
+      <text x="30" y="359" font-size="7" fill="#6b6b72">stateless service</text>
+      <rect x="150" y="350" width="10" height="10" fill="#ffffff" stroke="#c1121f" stroke-width="1.8"/>
+      <text x="166" y="359" font-size="7" fill="#6b6b72">operational core</text>
+      <rect x="290" y="350" width="10" height="10" fill="#f6f6f7" stroke="#cfcfd4"/>
+      <text x="306" y="359" font-size="7" fill="#6b6b72">data store</text>
+      <text x="14" y="382" font-size="7.2" fill="#6b6b72">Every arrow is an authenticated call. Services hold no session state; the token is the only carrier of identity and tenancy.</text>
+      <text x="14" y="396" font-size="7.2" fill="#6b6b72">No service reads another service's database. Cross-domain data is fetched over HTTP or referenced by identifier only.</text>
+      <text x="14" y="416" font-size="6.8" fill="#8a8a91">Ports shown are development defaults; in production each service is bound behind the reverse proxy and not exposed directly.</text>
+    </svg>

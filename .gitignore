@@ -1,0 +1,53 @@
+# dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# builds
+dist/
+build/
+.next/
+.nuxt/
+out/
+*.tsbuildinfo
+coverage/
+
+# flutter / dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.g.dart
+LoveMobi/build/
+
+# secrets — never commit real values
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# logs and local data
+*.log
+logs/
+*.sqlite
+*.sqlite3
+*.db
+
+# editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

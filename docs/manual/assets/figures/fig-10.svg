@@ -1,0 +1,31 @@
+<svg viewBox="0 0 700 214" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <rect x="0" y="0" width="700" height="214" fill="#ffffff"/>
+      <rect x="0" y="0" width="700" height="18" fill="#f6f6f7"/>
+      <circle cx="12" cy="9" r="3" fill="#cfcfd4"/><circle cx="24" cy="9" r="3" fill="#cfcfd4"/><circle cx="36" cy="9" r="3" fill="#cfcfd4"/>
+      <rect x="60" y="4" width="300" height="10" rx="2" fill="#ffffff" stroke="#d5dce4"/>
+      <text x="66" y="12" font-size="6" fill="#8a8a91">app.lovelaundry.lk</text>
+
+      <rect x="0" y="18" width="700" height="196" fill="#f7f8fa"/>
+      <rect x="238" y="42" width="224" height="148" rx="3" fill="#ffffff" stroke="#d5dce4"/>
+      <text x="252" y="62" font-size="8.6" font-weight="700" fill="#0b0b0c">LoveLaundry</text>
+      <text x="252" y="74" font-size="6.4" fill="#8a8a91">Sign in to your laundry</text>
+
+      <rect x="252" y="84" width="196" height="17" rx="2" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="258" y="96" font-size="6.2" fill="#8a8a91">Email address</text>
+      <rect x="252" y="108" width="196" height="17" rx="2" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="258" y="120" font-size="6.2" fill="#8a8a91">Password</text>
+      <rect x="252" y="132" width="196" height="17" rx="2" fill="#0b0b0c"/>
+      <text x="350" y="144" font-size="6.6" font-weight="700" fill="#ffffff" text-anchor="middle">Sign in</text>
+      <text x="252" y="162" font-size="5.8" fill="#8a8a91">Trouble signing in? Contact your laundry administrator.</text>
+      <text x="252" y="176" font-size="5.8" fill="#8a8a91">Sessions last 24 hours. Shared devices: sign out when finished.</text>
+
+      <circle cx="470" cy="80" r="6" fill="#c1121f"/><text x="470" y="82.4" font-size="6.4" font-weight="700" fill="#ffffff" text-anchor="middle">1</text>
+      <circle cx="470" cy="116" r="6" fill="#c1121f"/><text x="470" y="118.4" font-size="6.4" font-weight="700" fill="#ffffff" text-anchor="middle">2</text>
+      <circle cx="470" cy="140" r="6" fill="#c1121f"/><text x="470" y="142.4" font-size="6.4" font-weight="700" fill="#ffffff" text-anchor="middle">3</text>
+
+      <text x="484" y="78" font-size="6.2" fill="#2a2a2e">Account email — one per person, never shared</text>
+      <text x="484" y="114" font-size="6.2" fill="#2a2a2e">Password field is never autofilled on shared terminals</text>
+      <text x="484" y="138" font-size="6.2" fill="#2a2a2e">Signs in; token held for 24 h under the app's session key</text>
+
+      <text x="252" y="196" font-size="5.8" fill="#c1121f">Incorrect credentials and unknown accounts return the same message by design.</text>
+    </svg>

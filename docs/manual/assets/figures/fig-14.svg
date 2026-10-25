@@ -1,0 +1,42 @@
+<svg viewBox="0 0 700 232" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="700" height="232" fill="#ffffff"/>
+<rect x="0" y="0" width="700" height="22" fill="#0b0b0c"/>
+<text x="12" y="14" font-size="7.4" font-weight="700" fill="#ffffff">Shop Counter</text>
+<text x="110" y="14" font-size="6.4" fill="#dcdce0">Today · 24 Oct 2026</text>
+<rect x="548" y="6" width="66" height="12" rx="2" fill="#c1121f"/><text x="581" y="14.5" font-size="6" font-weight="700" fill="#ffffff" text-anchor="middle">Quick bill</text>
+<text x="628" y="14" font-size="6.2" fill="#dcdce0">Kasun · STAFF</text>
+
+<rect x="12" y="34" width="150" height="56" rx="3" fill="#f8f4ee" stroke="#e0cdb8"/>
+<text x="22" y="50" font-size="6" fill="#6b6b72">TAKINGS TODAY</text>
+<text x="22" y="70" font-size="13" font-weight="700" fill="#0b0b0c">24,850</text>
+<text x="22" y="82" font-size="5.6" fill="#8a8a91">18 bills · cash and card</text>
+
+<rect x="172" y="34" width="150" height="56" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+<text x="182" y="50" font-size="6" fill="#6b6b72">OPEN BILLS</text>
+<text x="182" y="70" font-size="13" font-weight="700" fill="#0b0b0c">3</text>
+<text x="182" y="82" font-size="5.6" fill="#8a8a91">held, not yet paid</text>
+
+<rect x="332" y="34" width="150" height="56" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+<text x="342" y="50" font-size="6" fill="#6b6b72">REFUNDS</text>
+<text x="342" y="70" font-size="13" font-weight="700" fill="#c1121f">1</text>
+<text x="342" y="82" font-size="5.6" fill="#8a8a91">requires supervisor</text>
+
+<rect x="492" y="34" width="196" height="56" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+<text x="502" y="50" font-size="6" fill="#6b6b72">SHIFT</text>
+<text x="502" y="66" font-size="6.2" fill="#2a2a2e">Opened 07:30 · Kasun</text>
+<text x="502" y="78" font-size="6.2" fill="#2a2a2e">Day close available at 19:00</text>
+
+<text x="12" y="112" font-size="6.4" font-weight="700" fill="#0b0b0c">RECENT BILLS</text>
+<line x1="12" y1="118" x2="688" y2="118" stroke="#ececee"/>
+<g font-size="6.2" fill="#2a2a2e">
+<text x="12" y="132">SB-20871</text><text x="90" y="132">Walk-in</text><text x="200" y="132">2 shirts, 1 trouser</text><text x="360" y="132">Wash &amp; press</text><text x="480" y="132">Cash</text><text x="560" y="132">1,450.00</text><text x="650" y="132">Paid</text>
+<line x1="12" y1="138" x2="688" y2="138" stroke="#f0f3f7"/>
+<text x="12" y="152">SB-20872</text><text x="90" y="152">Walk-in</text><text x="200" y="152">1 bedsheet</text><text x="360" y="152">Wash &amp; fold</text><text x="480" y="152">Card</text><text x="560" y="152">2,100.00</text><text x="650" y="152">Paid</text>
+<line x1="12" y1="158" x2="688" y2="158" stroke="#f0f3f7"/>
+<text x="12" y="172">SB-20873</text><text x="90" y="172">Mr Perera</text><text x="200" y="172">3 curtains</text><text x="360" y="172">Dry clean</text><text x="480" y="172">—</text><text x="560" y="172">5,400.00</text><text x="650" y="172" fill="#c1121f">Open</text>
+<line x1="12" y1="178" x2="688" y2="178" stroke="#f0f3f7"/>
+<text x="12" y="192">SB-20874</text><text x="90" y="192">Walk-in</text><text x="200" y="192">1 jacket</text><text x="360" y="192">Dry clean</text><text x="480" y="192">Cash</text><text x="560" y="192">2,800.00</text><text x="650" y="192">Paid</text>
+</g>
+<text x="12" y="214" font-size="5.8" fill="#8a8a91">Rows open the bill. An open bill can be completed or held; a paid bill can only be reprinted or refunded with approval.</text>
+<text x="12" y="224" font-size="5.8" fill="#8a8a91">Totals exclude refunds and are recomputed from bills, never from counters.</text>
+</svg>

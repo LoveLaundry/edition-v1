@@ -1,0 +1,40 @@
+<svg viewBox="0 0 700 236" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="700" height="236" fill="#ffffff"/>
+<rect x="0" y="0" width="700" height="20" fill="#0b0b0c"/>
+<text x="12" y="13" font-size="7" font-weight="700" fill="#ffffff">Quick bill</text>
+<text x="688" y="13" font-size="6" fill="#dcdce0" text-anchor="end">Esc to cancel</text>
+
+<rect x="12" y="30" width="420" height="192" rx="3" fill="#f7f8fa" stroke="#d5dce4"/>
+<text x="22" y="46" font-size="6" font-weight="700" fill="#0b0b0c">ITEMS</text>
+<g font-size="6.2" fill="#2a2a2e">
+<text x="22" y="64">Shirt — wash &amp; press</text><text x="250" y="64">x2</text><text x="330" y="64" text-anchor="end">700.00</text>
+<line x1="22" y1="70" x2="422" y2="70" stroke="#ececee"/>
+<text x="22" y="84">Trouser — wash &amp; press</text><text x="250" y="84">x1</text><text x="330" y="84" text-anchor="end">450.00</text>
+<line x1="22" y1="90" x2="422" y2="90" stroke="#ececee"/>
+<text x="22" y="104">Bedsheet — wash &amp; fold</text><text x="250" y="104">x1</text><text x="330" y="104" text-anchor="end">900.00</text>
+</g>
+<line x1="22" y1="118" x2="422" y2="118" stroke="#cfcfd4"/>
+<text x="22" y="134" font-size="6.4" fill="#6b6b72">Subtotal</text><text x="330" y="134" font-size="6.4" fill="#2a2a2e" text-anchor="end">2,050.00</text>
+<text x="22" y="150" font-size="6.4" fill="#6b6b72">Discount</text><text x="330" y="150" font-size="6.4" fill="#2a2a2e" text-anchor="end">0.00</text>
+<text x="22" y="170" font-size="8" font-weight="700" fill="#0b0b0c">TOTAL</text><text x="330" y="170" font-size="8" font-weight="700" fill="#0b0b0c" text-anchor="end">2,050.00</text>
+<rect x="22" y="182" width="120" height="24" rx="2" fill="#ffffff" stroke="#cfcfd4"/><text x="82" y="197" font-size="6.4" fill="#6b6b72" text-anchor="middle">Hold bill</text>
+<rect x="152" y="182" width="120" height="24" rx="2" fill="#ffffff" stroke="#cfcfd4"/><text x="212" y="197" font-size="6.4" fill="#6b6b72" text-anchor="middle">Discount</text>
+<rect x="282" y="182" width="140" height="24" rx="2" fill="#c1121f"/><text x="352" y="197" font-size="6.6" font-weight="700" fill="#ffffff" text-anchor="middle">CASH — take payment</text>
+
+<rect x="444" y="30" width="244" height="192" rx="3" fill="#ffffff" stroke="#d5dce4"/>
+<text x="456" y="46" font-size="6" font-weight="700" fill="#6b6b72">ONE-TOUCH SERVICES</text>
+<g fill="#f6f6f7" stroke="#cfcfd4">
+<rect x="456" y="54" width="72" height="30" rx="2"/><rect x="534" y="54" width="72" height="30" rx="2"/><rect x="612" y="54" width="64" height="30" rx="2"/>
+<rect x="456" y="90" width="72" height="30" rx="2"/><rect x="534" y="90" width="72" height="30" rx="2"/><rect x="612" y="90" width="64" height="30" rx="2"/>
+<rect x="456" y="126" width="72" height="30" rx="2"/><rect x="534" y="126" width="72" height="30" rx="2"/><rect x="612" y="126" width="64" height="30" rx="2"/>
+</g>
+<g font-size="5.8" fill="#0b0b0c" text-anchor="middle">
+<text x="492" y="73">Shirt</text><text x="570" y="73">Trouser</text><text x="644" y="73">Sheet</text>
+<text x="492" y="109">Towel</text><text x="570" y="109">Duvet</text><text x="644" y="109">Curtain</text>
+<text x="492" y="145">Suit</text><text x="570" y="145">Dress</text><text x="644" y="145">Blanket</text>
+</g>
+<text x="456" y="176" font-size="6" font-weight="700" fill="#6b6b72">TENDER</text>
+<rect x="456" y="182" width="70" height="24" rx="2" fill="#0b0b0c"/><text x="491" y="197" font-size="6.2" fill="#ffffff" text-anchor="middle">Cash</text>
+<rect x="532" y="182" width="70" height="24" rx="2" fill="#ffffff" stroke="#cfcfd4"/><text x="567" y="197" font-size="6.2" fill="#6b6b72" text-anchor="middle">Card</text>
+<rect x="608" y="182" width="68" height="24" rx="2" fill="#ffffff" stroke="#cfcfd4"/><text x="642" y="197" font-size="6.2" fill="#6b6b72" text-anchor="middle">Split</text>
+</svg>

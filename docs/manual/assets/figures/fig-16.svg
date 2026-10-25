@@ -1,0 +1,41 @@
+<svg viewBox="0 0 700 214" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="700" height="214" fill="#ffffff"/>
+<rect x="0" y="0" width="700" height="22" fill="#0b0b0c"/>
+<text x="12" y="14" font-size="7.2" font-weight="700" fill="#ffffff">Hotel Desk</text>
+<text x="96" y="14" font-size="6.4" fill="#dcdce0">Grand Bay Hotel</text>
+<text x="640" y="14" font-size="6.2" fill="#dcdce0">HOTEL_ADMIN</text>
+<text x="688" y="14" font-size="6" fill="#9a9aa1" text-anchor="end">Sign out</text>
+
+<rect x="12" y="34" width="164" height="52" rx="3" fill="#f8f4ee" stroke="#e0cdb8"/>
+<text x="22" y="49" font-size="5.8" fill="#6b6b72">WITH THE LAUNDRY</text>
+<text x="22" y="68" font-size="12" font-weight="700" fill="#0b0b0c">3 passes</text>
+<text x="22" y="80" font-size="5.6" fill="#8a8a91">412 items in progress</text>
+
+<rect x="186" y="34" width="164" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+<text x="196" y="49" font-size="5.8" fill="#6b6b72">RETURNED THIS MONTH</text>
+<text x="196" y="68" font-size="12" font-weight="700" fill="#0b0b0c">1,284</text>
+<text x="196" y="80" font-size="5.6" fill="#8a8a91">items across 9 deliveries</text>
+
+<rect x="360" y="34" width="164" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+<text x="370" y="49" font-size="5.8" fill="#6b6b72">OUTSTANDING</text>
+<text x="370" y="68" font-size="12" font-weight="700" fill="#0b0b0c">86,400</text>
+<text x="370" y="80" font-size="5.6" fill="#8a8a91">2 invoices unpaid</text>
+
+<rect x="534" y="34" width="154" height="52" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+<text x="544" y="49" font-size="5.8" fill="#6b6b72">STATEMENT PERIOD</text>
+<text x="544" y="66" font-size="6.4" fill="#2a2a2e">1 – 31 October 2026</text>
+<text x="544" y="78" font-size="5.6" fill="#8a8a91">Open statement</text>
+
+<text x="12" y="106" font-size="6.4" font-weight="700" fill="#0b0b0c">RECENT INVOICES</text>
+<line x1="12" y1="112" x2="688" y2="112" stroke="#ececee"/>
+<g font-size="6.2" fill="#2a2a2e">
+<text x="12" y="126">INV-3091</text><text x="90" y="126">1 – 15 Oct</text><text x="190" y="126">612 items</text><text x="300" y="126">148,900.00</text><text x="410" y="126" fill="#c1121f">Part paid</text><text x="490" y="126">Due 31 Oct</text>
+<line x1="12" y1="132" x2="688" y2="132" stroke="#f0f3f7"/>
+<text x="12" y="146">INV-3084</text><text x="90" y="146">16 – 30 Sep</text><text x="190" y="146">588 items</text><text x="300" y="146">142,300.00</text><text x="410" y="146" fill="#0b0b0c">Paid</text><text x="490" y="146">Settled 12 Oct</text>
+</g>
+
+<text x="12" y="170" font-size="6" font-weight="700" fill="#6b6b72">YOUR ACCESS</text>
+<text x="12" y="182" font-size="5.8" fill="#6b6b72">Gate passes and deliveries for Grand Bay Hotel · invoices and statements · no rate editing · no other property's records.</text>
+<text x="12" y="196" font-size="5.6" fill="#8a8a91">Figures are read from the laundry's operational records at the moment the page loads. There is no cached copy and no nightly snapshot.</text>
+<text x="12" y="206" font-size="5.6" fill="#8a8a91">A discrepancy should be raised with the laundry quoting the pass or invoice number, not corrected here.</text>
+</svg>

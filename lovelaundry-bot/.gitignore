@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+*.log
+*.ipynb
+.DS_Store
+lovelaundry-model
+lovelaundry-model-merged
+*.gguf
+__pycache__
+venv

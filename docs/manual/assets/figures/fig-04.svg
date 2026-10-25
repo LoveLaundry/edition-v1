@@ -1,0 +1,84 @@
+<svg viewBox="0 0 700 372" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <rect x="0" y="0" width="700" height="372" fill="#fbfcfd"/>
+      <defs><marker id="tp" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="#9a9aa1"/></marker></defs>
+
+      <text x="14" y="16" font-size="7.4" fill="#8a8a91" letter-spacing="1.4" font-weight="600">PUBLIC EDGE</text>
+      <rect x="14" y="24" width="150" height="46" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="26" y="41" font-size="8.6" font-weight="700" fill="#0b0b0c">Users and devices</text>
+      <text x="26" y="54" font-size="6.9" fill="#6b6b72">browsers · scanners</text>
+      <text x="26" y="64" font-size="6.9" fill="#6b6b72">mobile · printers</text>
+
+      <line x1="164" y1="47" x2="214" y2="47" stroke="#9a9aa1" marker-end="url(#tp)"/>
+      <rect x="216" y="24" width="160" height="46" rx="3" fill="#0b0b0c"/>
+      <text x="228" y="41" font-size="8.6" font-weight="700" fill="#ffffff">Reverse proxy</text>
+      <text x="228" y="54" font-size="6.9" fill="#dcdce0">TLS · routing · limits</text>
+      <text x="228" y="64" font-size="6.9" fill="#dcdce0">static + /api prefixes</text>
+
+      <line x1="376" y1="47" x2="426" y2="47" stroke="#9a9aa1" marker-end="url(#tp)"/>
+      <rect x="428" y="24" width="150" height="46" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="440" y="41" font-size="8.6" font-weight="700" fill="#0b0b0c">Static bundles</text>
+      <text x="440" y="54" font-size="6.9" fill="#6b6b72">four React apps</text>
+      <text x="440" y="64" font-size="6.9" fill="#6b6b72">immutable, hashed</text>
+
+      <text x="14" y="104" font-size="7.4" fill="#8a8a91" letter-spacing="1.4" font-weight="600">APPLICATION HOST</text>
+      <rect x="14" y="112" width="564" height="96" rx="4" fill="none" stroke="#cfcfd4" stroke-dasharray="4 3"/>
+      <g>
+        <rect x="26" y="126" width="104" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="35" y="142" font-size="7.8" font-weight="700" fill="#ffffff">user-service</text>
+        <text x="35" y="156" font-size="6.6" fill="#dcdce0">:8002 · identity</text>
+        <text x="35" y="168" font-size="6.6" fill="#dcdce0">tenancy · tokens</text>
+        <text x="35" y="182" font-size="6.4" fill="#9a9aa1">loopback only</text>
+
+        <rect x="140" y="126" width="104" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="149" y="142" font-size="7.8" font-weight="700" fill="#ffffff">bill_service</text>
+        <text x="149" y="156" font-size="6.6" fill="#dcdce0">:8001 · operations</text>
+        <text x="149" y="168" font-size="6.6" fill="#dcdce0">passes · bills · linen</text>
+        <text x="149" y="182" font-size="6.4" fill="#9a9aa1">loopback only</text>
+
+        <rect x="254" y="126" width="104" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="263" y="142" font-size="7.6" font-weight="700" fill="#ffffff">laundry-</text>
+        <text x="263" y="152" font-size="7.6" font-weight="700" fill="#ffffff">management</text>
+        <text x="263" y="166" font-size="6.6" fill="#dcdce0">accounting</text>
+        <text x="263" y="182" font-size="6.4" fill="#9a9aa1">loopback only</text>
+
+        <rect x="368" y="126" width="104" height="66" rx="3" fill="#0b0b0c"/>
+        <text x="377" y="142" font-size="7.6" font-weight="700" fill="#ffffff">quotation ·</text>
+        <text x="377" y="152" font-size="7.6" font-weight="700" fill="#ffffff">worker · ai</text>
+        <text x="377" y="166" font-size="6.6" fill="#dcdce0">support services</text>
+        <text x="377" y="182" font-size="6.4" fill="#9a9aa1">loopback only</text>
+
+        <rect x="482" y="126" width="84" height="66" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+        <text x="491" y="142" font-size="7.6" font-weight="700" fill="#0b0b0c">Scheduler</text>
+        <text x="491" y="156" font-size="6.6" fill="#6b6b72">backup jobs</text>
+        <text x="491" y="168" font-size="6.6" fill="#6b6b72">day-close jobs</text>
+        <text x="491" y="182" font-size="6.4" fill="#8a8a91">cron / timer</text>
+      </g>
+
+      <line x1="300" y1="208" x2="300" y2="234" stroke="#9a9aa1" marker-end="url(#tp)"/>
+      <text x="308" y="226" font-size="6.8" fill="#6b6b72">TLS, per-service credential</text>
+
+      <text x="14" y="252" font-size="7.4" fill="#8a8a91" letter-spacing="1.4" font-weight="600">DATA TIER</text>
+      <rect x="14" y="260" width="360" height="76" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+      <text x="26" y="276" font-size="8.4" font-weight="700" fill="#0b0b0c">MongoDB replica set</text>
+      <text x="26" y="290" font-size="6.9" fill="#6b6b72">primary — accepts writes</text>
+      <text x="26" y="302" font-size="6.9" fill="#6b6b72">secondary — failover and read scaling</text>
+      <text x="26" y="314" font-size="6.9" fill="#6b6b72">oplog enabled — point-in-time recovery</text>
+      <text x="26" y="328" font-size="6.6" fill="#8a8a91" font-style="italic">user_db · operations · accounting</text>
+
+      <rect x="390" y="260" width="140" height="76" rx="3" fill="#f8f4ee" stroke="#c1121f"/>
+      <text x="402" y="276" font-size="8.4" font-weight="700" fill="#0b0b0c">Object storage</text>
+      <text x="402" y="290" font-size="6.9" fill="#6b6b72">encrypted backups</text>
+      <text x="402" y="302" font-size="6.9" fill="#6b6b72">versioned bucket</text>
+      <text x="402" y="314" font-size="6.9" fill="#6b6b72">immutable retention</text>
+      <text x="402" y="328" font-size="6.6" fill="#8a8a91" font-style="italic">separate account</text>
+
+      <rect x="546" y="260" width="140" height="76" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="558" y="276" font-size="8.4" font-weight="700" fill="#0b0b0c">Logs and metrics</text>
+      <text x="558" y="290" font-size="6.9" fill="#6b6b72">structured JSON logs</text>
+      <text x="558" y="302" font-size="6.9" fill="#6b6b72">uptime probes</text>
+      <text x="558" y="314" font-size="6.9" fill="#6b6b72">alert routing</text>
+
+      <line x1="374" y1="298" x2="390" y2="298" stroke="#c1121f" stroke-dasharray="3 2"/>
+      <line x1="530" y1="298" x2="546" y2="298" stroke="#cfcfd4"/>
+      <text x="14" y="356" font-size="6.9" fill="#8a8a91">The application host runs one process per service under a supervisor; the reverse proxy is the only listener on 443. MongoDB and object storage sit in a private network.</text>
+    </svg>

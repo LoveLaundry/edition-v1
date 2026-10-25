@@ -1,0 +1,250 @@
+[
+ {
+  "n": 1,
+  "png": "fig-01.png",
+  "caption": "Figure 1 \u2014 Service map. Five client applications call six FastAPI services; three MongoDB databases hold identity, operations and accounting data respectively. The operational core, bill_service, is outlined in the accent colour.",
+  "w": 1400,
+  "h": 876,
+  "ok": true
+ },
+ {
+  "n": 2,
+  "png": "fig-02.png",
+  "caption": "Figure 2 \u2014 Request lifecycle for an authenticated write. Tenancy resolution precedes authorisation, and no query is built before both have succeeded.",
+  "w": 1400,
+  "h": 296,
+  "ok": true
+ },
+ {
+  "n": 3,
+  "png": "fig-03.png",
+  "caption": "Figure 3 \u2014 JWT issuance and tenancy resolution. The token is issued once, verified on every request, and is the sole carrier of laundry_id.",
+  "w": 1400,
+  "h": 848,
+  "ok": true
+ },
+ {
+  "n": 4,
+  "png": "fig-04.png",
+  "caption": "Figure 4 \u2014 Reference deployment topology: proxy at the edge, services on loopback, replica set and object storage behind a private network.",
+  "w": 1400,
+  "h": 744,
+  "ok": true
+ },
+ {
+  "n": 5,
+  "png": "fig-05.png",
+  "caption": "Figure 5 \u2014 Service dependency graph, drawn as a line diagram: authenticated HTTP between services, per-service credentials to each store.",
+  "w": 1400,
+  "h": 660,
+  "ok": true
+ },
+ {
+  "n": 6,
+  "png": "fig-06.png",
+  "caption": "Figure 6 \u2014 The tenancy decision chain. Each failure returns before the next check runs.",
+  "w": 1400,
+  "h": 620,
+  "ok": true
+ },
+ {
+  "n": 7,
+  "png": "fig-07.png",
+  "caption": "Figure 7 \u2014 Failure domains in the reference deployment: application host, database replica set, object storage.",
+  "w": 1400,
+  "h": 568,
+  "ok": true
+ },
+ {
+  "n": 8,
+  "png": "fig-08.png",
+  "caption": "Figure 8 \u2014 Envelope encryption at rest, with a separate deterministic path for equality search.",
+  "w": 1400,
+  "h": 584,
+  "ok": true
+ },
+ {
+  "n": 9,
+  "png": "fig-09.png",
+  "caption": "Figure 9 \u2014 Claim-by-claim comparison of staff and hotel client tokens.",
+  "w": 1400,
+  "h": 620,
+  "ok": true
+ },
+ {
+  "n": 10,
+  "png": "fig-10.png",
+  "caption": "Figure 10 \u2014 Laundry app sign-in with field annotations.",
+  "w": 1400,
+  "h": 428,
+  "ok": true
+ },
+ {
+  "n": 11,
+  "png": "fig-11.png",
+  "caption": "Figure 11 \u2014 Gate-pass register with annotations.",
+  "w": 1400,
+  "h": 452,
+  "ok": true
+ },
+ {
+  "n": 12,
+  "png": "fig-12.png",
+  "caption": "Figure 12 \u2014 Gate-pass editor, showing header fields and item lines.",
+  "w": 1400,
+  "h": 472,
+  "ok": true
+ },
+ {
+  "n": 13,
+  "png": "fig-13.png",
+  "caption": "Figure 13 \u2014 Day-close sequence, including the blocked branch when unbilled deliveries remain.",
+  "w": 1400,
+  "h": 648,
+  "ok": true
+ },
+ {
+  "n": 14,
+  "png": "fig-14.png",
+  "caption": "Figure 14 \u2014 Shop Counter today view.",
+  "w": 1400,
+  "h": 464,
+  "ok": true
+ },
+ {
+  "n": 15,
+  "png": "fig-15.png",
+  "caption": "Figure 15 \u2014 Quick bill pad: item list left, one-touch services and tender right.",
+  "w": 1400,
+  "h": 472,
+  "ok": true
+ },
+ {
+  "n": 16,
+  "png": "fig-16.png",
+  "caption": "Figure 16 \u2014 Hotel Desk overview for a single property.",
+  "w": 1400,
+  "h": 428,
+  "ok": true
+ },
+ {
+  "n": 17,
+  "png": "fig-17.png",
+  "caption": "Figure 17 \u2014 Request path from a client token to a scoped query, with the rejected paths shown.",
+  "w": 1400,
+  "h": 532,
+  "ok": true
+ },
+ {
+  "n": 18,
+  "png": "fig-18.png",
+  "caption": "Figure 18 \u2014 Linen state machine. Exceptions (mark_missing, mark_damaged, retire) branch from the active state.",
+  "w": 1400,
+  "h": 364,
+  "ok": true
+ },
+ {
+  "n": 19,
+  "png": "fig-19.png",
+  "caption": "Figure 19 \u2014 Scan station: scan field, current tag card and legal next actions.",
+  "w": 1400,
+  "h": 448,
+  "ok": true
+ },
+ {
+  "n": 20,
+  "png": "fig-20.png",
+  "caption": "Figure 20 \u2014 The linen state machine with its exception branches. Transitions are written by scan events only.",
+  "w": 1400,
+  "h": 536,
+  "ok": true
+ },
+ {
+  "n": 21,
+  "png": "fig-21.png",
+  "caption": "Figure 21 \u2014 Incident roles. In a small team one person may hold two roles, but the scribe role is never dropped.",
+  "w": 1400,
+  "h": 264,
+  "ok": true
+ },
+ {
+  "n": 22,
+  "png": "fig-22.png",
+  "caption": "Figure 22 \u2014 Severity bands with response targets and the people they summon.",
+  "w": 1400,
+  "h": 544,
+  "ok": true
+ },
+ {
+  "n": 23,
+  "png": "fig-23.png",
+  "caption": "Figure 23 \u2014 Backup, retention and point-in-time recovery timeline.",
+  "w": 1400,
+  "h": 420,
+  "ok": true
+ },
+ {
+  "n": 24,
+  "png": "fig-24.png",
+  "caption": "Figure 24 \u2014 Daily dumps, continuous oplog and the off-host copy, against the recovery-point target.",
+  "w": 1400,
+  "h": 452,
+  "ok": true
+ },
+ {
+  "n": 25,
+  "png": "fig-25.png",
+  "caption": "Figure 25 \u2014 Idempotent write path. The key and the record are committed together, so a crash cannot leave one without the other.",
+  "w": 1400,
+  "h": 264,
+  "ok": true
+ },
+ {
+  "n": 26,
+  "png": "fig-26.png",
+  "caption": "Figure 26 \u2014 Layered defences against double billing, from the data model to the day-close review.",
+  "w": 1400,
+  "h": 620,
+  "ok": true
+ },
+ {
+  "n": 27,
+  "png": "fig-27.png",
+  "caption": "Figure 27 \u2014 Test strategy pyramid: broad service-level coverage, thin top layer.",
+  "w": 1400,
+  "h": 500,
+  "ok": true
+ },
+ {
+  "n": 28,
+  "png": "fig-28.png",
+  "caption": "Figure 28 \u2014 Measured coverage by layer.",
+  "w": 1400,
+  "h": 420,
+  "ok": true
+ },
+ {
+  "n": 29,
+  "png": "fig-29.png",
+  "caption": "Figure 29 \u2014 Health dependency chain. The proxy routes only to services whose readiness probe passes.",
+  "w": 1400,
+  "h": 264,
+  "ok": true
+ },
+ {
+  "n": 30,
+  "png": "fig-30.png",
+  "caption": "Figure 30 \u2014 Maintenance calendar by cadence.",
+  "w": 1400,
+  "h": 420,
+  "ok": true
+ },
+ {
+  "n": 31,
+  "png": "fig-31.png",
+  "caption": "Figure 31 \u2014 Alert lifecycle and the escalation loop when acknowledgement does not happen within target.",
+  "w": 1400,
+  "h": 376,
+  "ok": true
+ }
+]

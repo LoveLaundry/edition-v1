@@ -1,0 +1,69 @@
+<svg viewBox="0 0 700 292" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <rect x="0" y="0" width="700" height="292" fill="#fbfcfd"/>
+      <defs><marker id="ea" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="#9a9aa1"/></marker></defs>
+
+      <text x="14" y="16" font-size="7.4" fill="#8a8a91" letter-spacing="1.4" font-weight="600">WRITE PATH</text>
+
+      <rect x="14" y="26" width="132" height="58" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="26" y="43" font-size="8.4" font-weight="700" fill="#0b0b0c">Document</text>
+      <text x="26" y="56" font-size="6.9" fill="#6b6b72">field values in clear</text>
+      <text x="26" y="68" font-size="6.9" fill="#6b6b72">e.g. phone, address</text>
+      <text x="26" y="79" font-size="6.6" fill="#8a8a91">inside the service</text>
+
+      <line x1="146" y1="55" x2="180" y2="55" stroke="#9a9aa1" marker-end="url(#ea)"/>
+
+      <rect x="182" y="26" width="150" height="58" rx="3" fill="#0b0b0c"/>
+      <text x="194" y="43" font-size="8.4" font-weight="700" fill="#ffffff">AES-256-GCM</text>
+      <text x="194" y="56" font-size="6.9" fill="#dcdce0">per-document DEK</text>
+      <text x="194" y="68" font-size="6.9" fill="#dcdce0">random 96-bit IV</text>
+      <text x="194" y="79" font-size="6.9" fill="#dcdce0">auth tag verified on read</text>
+
+      <line x1="332" y1="55" x2="366" y2="55" stroke="#9a9aa1" marker-end="url(#ea)"/>
+
+      <rect x="368" y="26" width="150" height="58" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+      <text x="380" y="43" font-size="8.4" font-weight="700" fill="#0b0b0c">Stored envelope</text>
+      <text x="380" y="56" font-size="6.9" fill="#6b6b72">ciphertext · iv · tag</text>
+      <text x="380" y="68" font-size="6.9" fill="#6b6b72">wrapped_dek</text>
+      <text x="380" y="79" font-size="6.9" fill="#6b6b72">key_id</text>
+
+      <rect x="532" y="26" width="154" height="58" rx="3" fill="#f8f4ee" stroke="#c1121f"/>
+      <text x="544" y="43" font-size="8.4" font-weight="700" fill="#0b0b0c">KEK</text>
+      <text x="544" y="56" font-size="6.9" fill="#6b6b72">key-encryption key</text>
+      <text x="544" y="68" font-size="6.9" fill="#6b6b72">held outside the database</text>
+      <text x="544" y="79" font-size="6.9" fill="#6b6b72">rotatable by key_id</text>
+
+      <path d="M607 84 L607 100 L257 100 L257 84" fill="none" stroke="#c1121f" stroke-width="1.2"/>
+      <text x="432" y="113" font-size="7" fill="#c1121f" text-anchor="middle">wrap / unwrap — the KEK never leaves the key store</text>
+
+      <text x="14" y="136" font-size="7.4" fill="#8a8a91" letter-spacing="1.4" font-weight="600">SEARCH PATH</text>
+
+      <rect x="14" y="146" width="132" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="26" y="163" font-size="8.4" font-weight="700" fill="#0b0b0c">Lookup value</text>
+      <text x="26" y="176" font-size="6.9" fill="#6b6b72">e.g. client_name</text>
+      <text x="26" y="188" font-size="6.6" fill="#8a8a91">never stored in clear</text>
+
+      <line x1="146" y1="172" x2="180" y2="172" stroke="#9a9aa1" marker-end="url(#ea)"/>
+
+      <rect x="182" y="146" width="150" height="52" rx="3" fill="#0b0b0c"/>
+      <text x="194" y="163" font-size="8.4" font-weight="700" fill="#ffffff">HMAC-SHA256</text>
+      <text x="194" y="176" font-size="6.9" fill="#dcdce0">search key, tenant-scoped</text>
+      <text x="194" y="188" font-size="6.9" fill="#dcdce0">deterministic token</text>
+
+      <line x1="332" y1="172" x2="366" y2="172" stroke="#9a9aa1" marker-end="url(#ea)"/>
+
+      <rect x="368" y="146" width="150" height="52" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+      <text x="380" y="163" font-size="8.4" font-weight="700" fill="#0b0b0c">search_tokens</text>
+      <text x="380" y="176" font-size="6.9" fill="#6b6b72">indexed field</text>
+      <text x="380" y="188" font-size="6.9" fill="#6b6b72">equality match only</text>
+
+      <rect x="532" y="146" width="154" height="52" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="544" y="163" font-size="7.6" font-weight="700" fill="#0b0b0c">Query</text>
+      <text x="544" y="176" font-size="6.9" fill="#6b6b72">compute token, match</text>
+      <text x="544" y="188" font-size="6.9" fill="#6b6b72">no decryption needed</text>
+
+      <line x1="14" y1="214" x2="686" y2="214" stroke="#ececee"/>
+      <text x="14" y="230" font-size="7.2" fill="#6b6b72">Per-document DEKs limit the blast radius: one leaked key exposes one document, not the collection. Wrapped DEKs are stored beside the ciphertext; the KEK is held in the key store.</text>
+      <text x="14" y="244" font-size="7.2" fill="#6b6b72">Rotating the KEK re-wraps DEKs without re-encrypting documents. Rotating a DEK re-encrypts one document. Both operations are online and idempotent.</text>
+      <text x="14" y="258" font-size="7.2" fill="#6b6b72">Search tokens are HMACs, not hashes: without the search key an attacker cannot mount an offline dictionary attack on low-entropy values such as names.</text>
+      <text x="14" y="276" font-size="6.8" fill="#8a8a91" font-style="italic">AES-256-GCM provides confidentiality and integrity together; a modified ciphertext fails the authentication check and is rejected rather than decrypted.</text>
+    </svg>

@@ -1,0 +1,93 @@
+import os
+from datetime import datetime, timedelta, timezone
+from fastapi import HTTPException, Security, status
+from fastapi.security import HTTPBearer
+import jwt
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
+_jwt_secret = os.getenv("JWT_SECRET")
+if not _jwt_secret:
+    raise RuntimeError("FATAL: JWT_SECRET environment variable is not set. Refusing to start.")
+JWT_SECRET = _jwt_secret
+JWT_ALGORITHM = "HS256"
+
+security = HTTPBearer()
+
+
+def verify_token(token: str) -> dict:
+    """Verify and decode a JWT token (issued by user-service)."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication token")
+
+
+def get_current_user(credentials=Security(security)) -> dict:
+    token = credentials.credentials
+    return verify_token(token)
+
+
+ROLE_CAPABILITIES = {
+    "ADMIN": [
+        "management:read", "management:write",
+        "customer:read", "customer:write",
+        "item:read", "item:write",
+        "transaction:read", "transaction:write",
+        "expense:read", "expense:write",
+        "employee:read", "employee:write",
+        "salary:read", "salary:write",
+        "payment:read", "payment:write",
+        "report:read", "report:write", "dashboard:read", "import:write",
+    ],
+    "MANAGER": [
+        "management:read", "management:write",
+        "customer:read", "customer:write",
+        "item:read", "item:write",
+        "transaction:read", "transaction:write",
+        "expense:read", "expense:write",
+        "employee:read", "employee:write",
+        "salary:read", "salary:write",
+        "payment:read", "payment:write",
+        "report:read", "report:write", "dashboard:read", "import:write",
+    ],
+    # The counter role: takes orders, records payments, sees the day's takings.
+    #
+    # It deliberately has no payroll, HR, expense or reporting access. Those
+    # were readable by every STAFF token, so one compromised cashier account
+    # exposed every employee's salary, the full expense ledger and company-wide
+    # revenue. Anyone who can raise a payslip or a staff record needs MANAGER.
+    "STAFF": [
+        "management:read",
+        "customer:read", "customer:write",
+        "item:read",
+        "transaction:read", "transaction:write",
+        "payment:read",
+        "dashboard:read",
+    ],
+}
+
+# Platform administrators hold every capability that an ADMIN holds — kept as a
+# programmatic copy so a future ADMIN capability addition is automatically
+# inherited without a separate change here.
+ROLE_CAPABILITIES["PLATFORM_ADMIN"] = list(ROLE_CAPABILITIES["ADMIN"])
+
+
+def require_capability(capability: str):
+    """FastAPI dependency to validate fine-grained capabilities."""
+    def dependency(current_user: dict = Security(get_current_user)):
+        role = str(current_user.get("role") or "").upper()
+        capabilities = ROLE_CAPABILITIES.get(role, [])
+        if capability not in capabilities:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Role '{role}' is not authorized to perform this action (missing {capability})",
+            )
+        return current_user
+
+    return dependency

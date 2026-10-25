@@ -1,0 +1,57 @@
+<svg viewBox="0 0 700 148" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <rect x="0" y="0" width="700" height="148" fill="#fbfcfd"/>
+      <g font-size="7.6" text-anchor="middle">
+        <rect x="6" y="34" width="88" height="58" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="50" y="50" font-weight="700" font-size="8" fill="#0b0b0c">1 · Request</text>
+        <text x="50" y="64" fill="#6b6b72">app sends</text>
+        <text x="50" y="74" fill="#6b6b72">Bearer token</text>
+        <text x="50" y="84" fill="#6b6b72">+ JSON body</text>
+
+        <path d="M96 63 L104 63" stroke="#c1121f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <rect x="106" y="34" width="88" height="58" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="150" y="50" font-weight="700" font-size="8" fill="#0b0b0c">2 · Edge</text>
+        <text x="150" y="64" fill="#6b6b72">TLS terminate</text>
+        <text x="150" y="74" fill="#6b6b72">route by prefix</text>
+        <text x="150" y="84" fill="#6b6b72">size + time cap</text>
+
+        <path d="M196 63 L204 63" stroke="#c1121f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <rect x="206" y="34" width="88" height="58" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="250" y="50" font-weight="700" font-size="8" fill="#0b0b0c">3 · Verify</text>
+        <text x="250" y="64" fill="#6b6b72">signature · exp</text>
+        <text x="250" y="74" fill="#6b6b72">token_kind</text>
+        <text x="250" y="84" fill="#6b6b72">audience</text>
+
+        <path d="M296 63 L304 63" stroke="#c1121f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <rect x="306" y="34" width="88" height="58" rx="3" fill="#0b0b0c"/>
+        <text x="350" y="50" font-weight="700" font-size="8" fill="#ffffff">4 · Tenancy</text>
+        <text x="350" y="64" fill="#dcdce0">laundry_id from</text>
+        <text x="350" y="74" fill="#dcdce0">claims only</text>
+        <text x="350" y="84" fill="#dcdce0">missing → 403</text>
+
+        <path d="M396 63 L404 63" stroke="#c1121f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <rect x="406" y="34" width="88" height="58" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="450" y="50" font-weight="700" font-size="8" fill="#0b0b0c">5 · Authorise</text>
+        <text x="450" y="64" fill="#6b6b72">capability for</text>
+        <text x="450" y="74" fill="#6b6b72">route, e.g.</text>
+        <text x="450" y="84" fill="#6b6b72">bill:write</text>
+
+        <path d="M496 63 L504 63" stroke="#c1121f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <rect x="506" y="34" width="88" height="58" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="550" y="50" font-weight="700" font-size="8" fill="#0b0b0c">6 · Execute</text>
+        <text x="550" y="64" fill="#6b6b72">query scoped</text>
+        <text x="550" y="74" fill="#6b6b72">by laundry_id</text>
+        <text x="550" y="84" fill="#6b6b72">transaction</text>
+
+        <path d="M596 63 L604 63" stroke="#c1121f" stroke-width="1.4" marker-end="url(#ar)"/>
+        <rect x="606" y="34" width="88" height="58" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+        <text x="650" y="50" font-weight="700" font-size="8" fill="#0b0b0c">7 · Respond</text>
+        <text x="650" y="64" fill="#6b6b72">body + status</text>
+        <text x="650" y="74" fill="#6b6b72">audit entry</text>
+        <text x="650" y="84" fill="#6b6b72">request id</text>
+      </g>
+      <defs><marker id="ar" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 z" fill="#c1121f"/></marker></defs>
+      <text x="6" y="18" font-size="7.4" fill="#8a8a91" letter-spacing="1.4" font-weight="600">ONE AUTHENTICATED WRITE, END TO END</text>
+      <text x="6" y="112" font-size="7.2" fill="#6b6b72">Stages 3 to 5 are implemented once in shared middleware; a route cannot opt out of them. Stage 6 is the first point at which a database is touched.</text>
+      <text x="6" y="126" font-size="7.2" fill="#6b6b72">A request failing at stages 3, 4 or 5 returns 401, 403 or 403 respectively and is logged without the request body.</text>
+      <text x="6" y="140" font-size="6.8" fill="#8a8a91">Time budget: verification and authorisation are in-process checks; no network call to user-service is required on the hot path beyond key material refresh.</text>
+    </svg>

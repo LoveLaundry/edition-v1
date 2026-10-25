@@ -1,0 +1,76 @@
+<svg viewBox="0 0 700 424" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+      <rect x="0" y="0" width="700" height="424" fill="#fbfcfd"/>
+      <defs>
+        <marker id="sq" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="#0b0b0c"/></marker>
+        <marker id="sa" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="#c1121f"/></marker>
+      </defs>
+
+      <!-- actors -->
+      <rect x="18" y="14" width="128" height="34" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+      <text x="82" y="30" font-size="8.4" font-weight="700" fill="#0b0b0c" text-anchor="middle">Front-end app</text>
+      <text x="82" y="41" font-size="6.8" fill="#6b6b72" text-anchor="middle">browser, session key</text>
+
+      <rect x="196" y="14" width="128" height="34" rx="3" fill="#0b0b0c"/>
+      <text x="260" y="30" font-size="8.4" font-weight="700" fill="#ffffff" text-anchor="middle">user-service</text>
+      <text x="260" y="41" font-size="6.8" fill="#dcdce0" text-anchor="middle">:8002 · token issuer</text>
+
+      <rect x="374" y="14" width="128" height="34" rx="3" fill="#0b0b0c"/>
+      <text x="438" y="30" font-size="8.4" font-weight="700" fill="#ffffff" text-anchor="middle">bill_service</text>
+      <text x="438" y="41" font-size="6.8" fill="#dcdce0" text-anchor="middle">:8001 · resource server</text>
+
+      <rect x="552" y="14" width="128" height="34" rx="3" fill="#f6f6f7" stroke="#cfcfd4"/>
+      <text x="616" y="30" font-size="8.4" font-weight="700" fill="#0b0b0c" text-anchor="middle">MongoDB</text>
+      <text x="616" y="41" font-size="6.8" fill="#6b6b72" text-anchor="middle">operations database</text>
+
+      <!-- lifelines -->
+      <line x1="82" y1="48" x2="82" y2="392" stroke="#cfcfd4" stroke-dasharray="3 3"/>
+      <line x1="260" y1="48" x2="260" y2="392" stroke="#cfcfd4" stroke-dasharray="3 3"/>
+      <line x1="438" y1="48" x2="438" y2="392" stroke="#cfcfd4" stroke-dasharray="3 3"/>
+      <line x1="616" y1="48" x2="616" y2="392" stroke="#cfcfd4" stroke-dasharray="3 3"/>
+
+      <!-- 1 login -->
+      <line x1="82" y1="70" x2="254" y2="70" stroke="#0b0b0c" marker-end="url(#sq)"/>
+      <text x="88" y="64" font-size="7.2" fill="#0b0b0c">1 · POST /auth/login { email, password }</text>
+
+      <!-- 2 lookup -->
+      <line x1="260" y1="98" x2="610" y2="98" stroke="#6b6b72" marker-end="url(#sq)"/>
+      <text x="266" y="92" font-size="7.2" fill="#6b6b72">2 · find user, memberships and laundries</text>
+
+      <!-- 3 return -->
+      <line x1="616" y1="122" x2="266" y2="122" stroke="#6b6b72" stroke-dasharray="3 2" marker-end="url(#sq)"/>
+      <text x="330" y="116" font-size="7.2" fill="#6b6b72">3 · user document + membership snapshot</text>
+
+      <!-- 4 token -->
+      <line x1="260" y1="150" x2="88" y2="150" stroke="#c1121f" stroke-width="1.4" marker-end="url(#sa)"/>
+      <text x="94" y="144" font-size="7.2" fill="#c1121f" font-weight="600">4 · 200 OK · access_token (24 h) · stored as session</text>
+
+      <!-- claims note -->
+      <rect x="196" y="164" width="330" height="86" rx="2" fill="#f8f4ee" stroke="#e0cdb8"/>
+      <text x="204" y="178" font-size="7.2" font-weight="700" fill="#0b0b0c">Staff token claims</text>
+      <text x="204" y="192" font-size="6.9" fill="#6b6b72">sub · user id &nbsp;|&nbsp; laundries: [ { id, name, role } ] &nbsp;|&nbsp; exp</text>
+      <text x="204" y="205" font-size="6.9" fill="#6b6b72">laundry_id: active tenant &nbsp;|&nbsp; role: ADMIN | MANAGER | STAFF</text>
+      <text x="204" y="218" font-size="6.9" fill="#6b6b72">capabilities: [ "gatepass:read", "bill:write", … ]</text>
+      <text x="204" y="231" font-size="6.9" fill="#6b6b72">token_kind: "staff" &nbsp;|&nbsp; iss · aud · iat · jti</text>
+      <text x="204" y="244" font-size="6.7" fill="#8a8a91" font-style="italic">Nothing in the token can be set by the client; it is signed by user-service.</text>
+
+      <!-- 5 request -->
+      <line x1="82" y1="276" x2="432" y2="276" stroke="#0b0b0c" marker-end="url(#sq)"/>
+      <text x="88" y="270" font-size="7.2" fill="#0b0b0c">5 · GET /gate-passes &nbsp; Authorization: Bearer &lt;token&gt;</text>
+
+      <!-- 6 self verify -->
+      <path d="M438 292 h44 v18 h-44" fill="none" stroke="#c1121f"/>
+      <text x="488" y="300" font-size="6.9" fill="#c1121f">6 · verify signature, exp, token_kind</text>
+      <text x="488" y="311" font-size="6.9" fill="#c1121f">extract laundry_id — no fallback</text>
+
+      <!-- 7 query -->
+      <line x1="438" y1="336" x2="610" y2="336" stroke="#6b6b72" marker-end="url(#sq)"/>
+      <text x="444" y="330" font-size="7.2" fill="#6b6b72">7 · find({ laundry_id: &lt;claim&gt; })</text>
+
+      <!-- 8 docs -->
+      <line x1="616" y1="360" x2="444" y2="360" stroke="#6b6b72" stroke-dasharray="3 2" marker-end="url(#sq)"/>
+      <text x="470" y="354" font-size="7.2" fill="#6b6b72">8 · tenant-scoped documents</text>
+
+      <!-- 9 response -->
+      <line x1="438" y1="384" x2="88" y2="384" stroke="#0b0b0c" marker-end="url(#sq)"/>
+      <text x="94" y="378" font-size="7.2" fill="#0b0b0c">9 · 200 OK · rows for this laundry only</text>
+    </svg>

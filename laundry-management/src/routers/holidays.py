@@ -1,0 +1,129 @@
+﻿from datetime import datetime, timezone
+from typing import Optional
+
+from bson import ObjectId
+from fastapi import APIRouter, Depends, Query
+
+from ..auth_helper import require_capability
+from ..tenancy import assert_same_laundry, owned_filter, resolve_laundry_id, scoped_query
+from ..database.main_db import holidays_collection
+from ..models import HolidayCreate, HolidayUpdate
+from ..router_utils import serialize, log_audit
+from ..error_responses import NotFoundError, ConflictError
+
+router = APIRouter(tags=["Holidays"])
+
+
+def _parse_oid(value: str, label: str = "id") -> ObjectId:
+    if not ObjectId.is_valid(value):
+        raise NotFoundError(label, value)
+    return ObjectId(value)
+
+
+@router.get("/holidays")
+async def list_holidays(
+    year: Optional[int] = Query(None),
+    current_user: dict = Depends(require_capability("salary:read")),
+):
+    query: dict = {}
+    if year:
+        query["date"] = {"$regex": f"^{year:04d}-"}
+    query = scoped_query(query, resolve_laundry_id(current_user))
+    cursor = holidays_collection().find(query).sort("date", 1)
+    return [serialize(doc, []) async for doc in cursor]
+
+
+@router.get("/holidays/{holiday_id}")
+async def get_holiday(
+    holiday_id: str,
+    current_user: dict = Depends(require_capability("salary:read")),
+):
+    oid = _parse_oid(holiday_id, "holiday")
+    doc = await holidays_collection().find_one({"_id": oid})
+    assert_same_laundry(doc, resolve_laundry_id(current_user), "Holiday")
+    return serialize(doc, [])
+
+
+@router.post("/holidays")
+async def create_holiday(
+    payload: HolidayCreate,
+    current_user: dict = Depends(require_capability("salary:write")),
+):
+    laundry_id = resolve_laundry_id(current_user)
+    date_str = payload.date.isoformat()
+    existing = await holidays_collection().find_one(scoped_query({"date": date_str}, laundry_id))
+    if existing:
+        raise ConflictError(f"A holiday already exists on {date_str}")
+
+    doc = {
+        "laundry_id": laundry_id,
+        "name": payload.name.strip(),
+        "date": date_str,
+        "description": (payload.description or "").strip() or None,
+        "is_recurring": payload.is_recurring,
+        "created_at": datetime.now(timezone.utc),
+    }
+    result = await holidays_collection().insert_one(doc)
+    await log_audit(current_user,
+        "create", "holiday", str(result.inserted_id),
+        details={"name": payload.name, "date": date_str},
+    )
+    doc["_id"] = result.inserted_id
+    return serialize(doc, [])
+
+
+@router.put("/holidays/{holiday_id}")
+async def update_holiday(
+    holiday_id: str,
+    payload: HolidayUpdate,
+    current_user: dict = Depends(require_capability("salary:write")),
+):
+    laundry_id = resolve_laundry_id(current_user)
+    oid = _parse_oid(holiday_id, "holiday")
+    existing = await holidays_collection().find_one({"_id": oid})
+    assert_same_laundry(existing, laundry_id, "Holiday")
+
+    updates = payload.model_dump(exclude_none=True)
+    if "date" in updates and updates["date"] is not None:
+        updates["date"] = updates["date"].isoformat() if hasattr(updates["date"], "isoformat") else updates["date"]
+        dup = await holidays_collection().find_one(
+            scoped_query({"date": updates["date"], "_id": {"$ne": oid}}, laundry_id)
+        )
+        if dup:
+            raise ConflictError(f"A holiday already exists on {updates['date']}")
+
+    if len(updates) > 0:
+        await holidays_collection().update_one({"_id": oid}, {"$set": updates})
+    await log_audit(current_user,
+        "update", "holiday", holiday_id, details={},
+    )
+    updated = await holidays_collection().find_one(owned_filter(oid, laundry_id))
+    return serialize(updated, [])
+
+
+@router.delete("/holidays/{holiday_id}")
+async def delete_holiday(
+    holiday_id: str,
+    current_user: dict = Depends(require_capability("salary:write")),
+):
+    laundry_id = resolve_laundry_id(current_user)
+    oid = _parse_oid(holiday_id, "holiday")
+    existing = await holidays_collection().find_one({"_id": oid})
+    if not existing:
+        raise NotFoundError("Holiday", holiday_id)
+    await holidays_collection().delete_one({"_id": oid})
+    await log_audit(current_user,
+        "delete", "holiday", holiday_id, details={},
+    )
+    return {"success": True}
+
+
+@router.get("/holidays/check/{date}")
+async def check_holiday(
+    date: str,
+    current_user: dict = Depends(require_capability("salary:read")),
+):
+    doc = await holidays_collection().find_one(
+        scoped_query({"date": date}, resolve_laundry_id(current_user))
+    )
+    return {"is_holiday": doc is not None, "holiday": serialize(doc, []) if doc else None}

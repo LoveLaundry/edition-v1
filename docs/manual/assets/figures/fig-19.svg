@@ -1,0 +1,35 @@
+<svg viewBox="0 0 700 224" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="700" height="224" fill="#ffffff"/>
+<rect x="0" y="0" width="700" height="22" fill="#0b0b0c"/>
+<text x="12" y="14" font-size="7.2" font-weight="700" fill="#ffffff">Linen Room</text>
+<text x="96" y="14" font-size="6.2" fill="#dcdce0">Station 2 · Batch B-118</text>
+<text x="688" y="14" font-size="6.2" fill="#dcdce0" text-anchor="end">Housekeeper · Rani</text>
+
+<rect x="12" y="32" width="676" height="26" rx="2" fill="#f8f4ee" stroke="#c1121f"/>
+<text x="22" y="49" font-size="7" fill="#c1121f">Scan tag or type tag number</text>
+<text x="676" y="49" font-size="6" fill="#8a8a91" text-anchor="end">autofocus on</text>
+
+<rect x="12" y="68" width="330" height="112" rx="3" fill="#ffffff" stroke="#cfcfd4"/>
+<text x="24" y="84" font-size="5.8" fill="#6b6b72">CURRENT TAG</text>
+<text x="24" y="102" font-size="12" font-weight="700" fill="#0b0b0c">TAG-004821</text>
+<text x="24" y="118" font-size="6.4" fill="#2a2a2e">Bed sheet — king · Grand Bay Hotel</text>
+<text x="24" y="132" font-size="6.4" fill="#2a2a2e">Pass GP-1041 · Batch B-118</text>
+<rect x="24" y="142" width="92" height="18" rx="9" fill="#0b0b0c"/>
+<text x="70" y="154" font-size="6.2" font-weight="700" fill="#ffffff" text-anchor="middle">IN WASH</text>
+<text x="128" y="155" font-size="5.8" fill="#8a8a91">last scan 09:42 · Rani</text>
+
+<rect x="352" y="68" width="336" height="112" rx="3" fill="#f7f8fa" stroke="#d5dce4"/>
+<text x="364" y="84" font-size="5.8" font-weight="700" fill="#6b6b72">NEXT ACTIONS</text>
+<g fill="#ffffff" stroke="#cfcfd4">
+<rect x="364" y="92" width="98" height="34" rx="2"/><rect x="470" y="92" width="98" height="34" rx="2"/><rect x="576" y="92" width="98" height="34" rx="2"/>
+<rect x="364" y="134" width="98" height="34" rx="2"/><rect x="470" y="134" width="98" height="34" rx="2"/><rect x="576" y="134" width="98" height="34" rx="2"/>
+</g>
+<g font-size="6.4" fill="#0b0b0c" text-anchor="middle">
+<text x="413" y="112">complete_wash</text><text x="519" y="112">press</text><text x="625" y="112">ready</text>
+<text x="413" y="154" fill="#c1121f">mark_damaged</text><text x="519" y="154" fill="#c1121f">mark_missing</text><text x="625" y="154" fill="#8a8a91">retire</text>
+</g>
+
+<text x="12" y="196" font-size="6" font-weight="700" fill="#0b0b0c">RECENT SCANS</text>
+<text x="12" y="208" font-size="5.8" fill="#6b6b72">09:42 TAG-004821 in wash → complete_wash available · 09:41 TAG-004820 pressed · 09:40 TAG-004819 received</text>
+<text x="12" y="219" font-size="5.6" fill="#8a8a91">Actions are limited to legal transitions. Items marked damaged or missing leave the batch and appear in Discrepancies.</text>
+</svg>

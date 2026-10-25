@@ -1,0 +1,245 @@
+"""
+Central MongoDB collection access for the Laundry Management service.
+
+Uses the same three-database architecture as bill_service. All business data
+lives in the MAIN database; SECONDARY/LOCAL are reserved for replication.
+"""
+from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorDatabase
+
+from ..tenant_scope import TenantScopedCollection
+from .connection_manager import get_database
+
+CLIENTS = "clients"
+CUSTOMERS = "customers"
+CUSTOMER_RATES = "customer_rates"
+CATEGORIES = "categories"
+ITEMS = "items"
+TRANSACTIONS = "transactions"
+PAYMENTS = "payments"
+EMPLOYEES = "employees"
+SALARIES = "salaries"
+ATTENDANCE = "attendance"
+SALARY_ADVANCES = "salary_advances"
+SALARY_SLIPS = "salary_slips"
+SALARY_PACKAGES = "salary_packages"
+HOLIDAYS = "holidays"
+EXTRA_WORK_CATEGORIES = "extra_work_categories"
+EXTRA_WORK_RECORDS = "extra_work_records"
+COMPANY_SETTINGS = "company_settings"
+ELECTRICITY_METER_READINGS = "electricity_meter_readings"
+EXPENSE_CATEGORIES = "expense_categories"
+EXPENSES = "expenses"
+EXPENSE_TEMPLATES = "expense_templates"
+IMPORTS = "imports"
+AUDIT_LOGS = "audit_logs"
+IDEMPOTENCY_KEYS = "idempotency_keys"
+SAVED_REPORTS = "saved_reports"
+
+
+def _db() -> AsyncIOMotorDatabase:
+    return get_database("main")
+
+
+def _coll(name: str) -> TenantScopedCollection:
+    """Every business collection is tenant-scoped; there is no raw accessor."""
+    return TenantScopedCollection(_db()[name], name)
+
+
+def clients_collection() -> AsyncIOMotorCollection:
+    return _coll(CLIENTS)
+
+
+def customers_collection() -> AsyncIOMotorCollection:
+    return _coll(CUSTOMERS)
+
+
+def customer_rates_collection() -> AsyncIOMotorCollection:
+    return _coll(CUSTOMER_RATES)
+
+
+def categories_collection() -> AsyncIOMotorCollection:
+    return _coll(CATEGORIES)
+
+
+def items_collection() -> AsyncIOMotorCollection:
+    return _coll(ITEMS)
+
+
+def transactions_collection() -> AsyncIOMotorCollection:
+    return _coll(TRANSACTIONS)
+
+
+def payments_collection() -> AsyncIOMotorCollection:
+    return _coll(PAYMENTS)
+
+
+def employees_collection() -> AsyncIOMotorCollection:
+    return _coll(EMPLOYEES)
+
+
+def salaries_collection() -> AsyncIOMotorCollection:
+    return _coll(SALARIES)
+
+
+def attendance_collection() -> AsyncIOMotorCollection:
+    return _coll(ATTENDANCE)
+
+
+def salary_advances_collection() -> AsyncIOMotorCollection:
+    return _coll(SALARY_ADVANCES)
+
+
+def salary_slips_collection() -> AsyncIOMotorCollection:
+    return _coll(SALARY_SLIPS)
+
+
+def salary_packages_collection() -> AsyncIOMotorCollection:
+    return _coll(SALARY_PACKAGES)
+
+
+def holidays_collection() -> AsyncIOMotorCollection:
+    return _coll(HOLIDAYS)
+
+
+def extra_work_categories_collection() -> AsyncIOMotorCollection:
+    return _coll(EXTRA_WORK_CATEGORIES)
+
+
+def extra_work_records_collection() -> AsyncIOMotorCollection:
+    return _coll(EXTRA_WORK_RECORDS)
+
+
+def company_settings_collection() -> AsyncIOMotorCollection:
+    return _coll(COMPANY_SETTINGS)
+
+
+def electricity_meter_readings_collection() -> AsyncIOMotorCollection:
+    return _coll(ELECTRICITY_METER_READINGS)
+
+
+def expense_categories_collection() -> AsyncIOMotorCollection:
+    return _coll(EXPENSE_CATEGORIES)
+
+
+def expenses_collection() -> AsyncIOMotorCollection:
+    return _coll(EXPENSES)
+
+
+def expense_templates_collection() -> AsyncIOMotorCollection:
+    return _coll(EXPENSE_TEMPLATES)
+
+
+def idempotency_keys_collection() -> AsyncIOMotorCollection:
+    return _coll(IDEMPOTENCY_KEYS)
+
+
+def imports_collection() -> AsyncIOMotorCollection:
+    return _coll(IMPORTS)
+
+
+def audit_logs_collection() -> AsyncIOMotorCollection:
+    return _coll(AUDIT_LOGS)
+
+
+def saved_reports_collection() -> AsyncIOMotorCollection:
+    return _coll(SAVED_REPORTS)
+
+
+async def _ensure_tenant_unique_index(collection, keys, legacy_index_name: str) -> None:
+    """Install tenant-scoped uniqueness before removing a legacy global index."""
+    await collection.create_index(keys, unique=True, background=True)
+    indexes = await collection.index_information()
+    if indexes.get(legacy_index_name, {}).get("unique"):
+        await collection.drop_index(legacy_index_name)
+
+
+async def ensure_indexes() -> None:
+    """Create all required indexes at startup."""
+    await customers_collection().create_index("name_search", background=True)
+    await customers_collection().create_index([("created_at", -1)], background=True)
+    await customers_collection().create_index("name", background=True)
+    await customers_collection().create_index("phone", background=True)
+
+    await customer_rates_collection().create_index("customer_id", background=True)
+    await customer_rates_collection().create_index("item_id", background=True)
+
+    await items_collection().create_index("name_search", background=True)
+    await items_collection().create_index("category_id", background=True)
+    await items_collection().create_index("name", background=True)
+
+    await transactions_collection().create_index([("transaction_date", -1)], background=True)
+    await transactions_collection().create_index("customer_id", background=True)
+    await transactions_collection().create_index("invoice_search", background=True)
+    await transactions_collection().create_index("created_at", background=True)
+    await transactions_collection().create_index("import_batch_id", background=True)
+    await transactions_collection().create_index("employee_id", background=True)
+    await transactions_collection().create_index("source", background=True)
+    await transactions_collection().create_index("item_ids", background=True)
+
+    await payments_collection().create_index("customer_id", background=True)
+    await payments_collection().create_index("payment_date", background=True)
+    await payments_collection().create_index([("payment_date", -1), ("type", 1)], background=True)
+
+    await employees_collection().create_index("name_search", background=True)
+    await employees_collection().create_index("status", background=True)
+
+    await salaries_collection().create_index("employee_id", background=True)
+    await salaries_collection().create_index("month", background=True)
+
+    await attendance_collection().create_index("employee_id", background=True)
+    await attendance_collection().create_index("date", background=True)
+    await attendance_collection().create_index([("employee_id", 1), ("date", 1)], unique=True, background=True)
+
+    await salary_advances_collection().create_index("employee_id", background=True)
+    await salary_advances_collection().create_index("status", background=True)
+    await salary_advances_collection().create_index("date", background=True)
+    await salary_advances_collection().create_index([("employee_id", 1), ("date", -1)], background=True)
+
+    await salary_slips_collection().create_index("employee_id", background=True)
+    await salary_slips_collection().create_index([("employee_id", 1), ("period_start", 1)], background=True)
+    await salary_slips_collection().create_index("slip_number", background=True)
+    await salary_slips_collection().create_index("status", background=True)
+    await salary_slips_collection().create_index("period_start", background=True)
+
+    await salary_packages_collection().create_index([("employee_id", 1), ("month", 1)], unique=True, background=True)
+
+    await _ensure_tenant_unique_index(
+        holidays_collection(),
+        [("laundry_id", 1), ("date", 1)],
+        "date_1",
+    )
+    await holidays_collection().create_index("date", background=True)
+
+    await extra_work_categories_collection().create_index("name", background=True)
+    await extra_work_categories_collection().create_index("is_active", background=True)
+
+    await extra_work_records_collection().create_index("employee_id", background=True)
+    await extra_work_records_collection().create_index("category_id", background=True)
+    await extra_work_records_collection().create_index("date", background=True)
+    await extra_work_records_collection().create_index([("employee_id", 1), ("date", 1)], background=True)
+
+    await company_settings_collection().create_index("key", background=True)
+    await electricity_meter_readings_collection().create_index(
+        [("meter_id", 1), ("recorded_at", -1)], background=True
+    )
+
+    await expense_categories_collection().create_index("name_search", background=True)
+
+    await expenses_collection().create_index("expense_date", background=True)
+    await expenses_collection().create_index("category_id", background=True)
+    await expenses_collection().create_index("date", background=True)
+
+    await expense_templates_collection().create_index("name_search", background=True)
+    await expense_templates_collection().create_index("is_active", background=True)
+
+    await idempotency_keys_collection().create_index("key", unique=True, background=True)
+    await idempotency_keys_collection().create_index("created_at", background=True)
+
+    await imports_collection().create_index("status", background=True)
+    await imports_collection().create_index("created_at", background=True)
+
+    await audit_logs_collection().create_index("created_at", background=True)
+    await audit_logs_collection().create_index([("entity_type", 1), ("entity_id", 1)], background=True)
+    await audit_logs_collection().create_index([("laundry_id", 1), ("timestamp", -1)], background=True)
+
+    await saved_reports_collection().create_index([("updated_at", -1)], background=True)
