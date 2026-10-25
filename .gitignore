@@ -37,6 +37,7 @@ LoveMobi/build/
 *.pem
 *.key
 secrets/
+deploy/backend.env
 
 # logs and local data
 *.log
