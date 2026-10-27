@@ -1,4 +1,4 @@
-from src.main import app
+from src.laundry_management.main import app
 
 # Vercel / Now Python serverless entry point
 # All API routes are served under /api as handled by FastAPI in src/main.py
