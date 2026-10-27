@@ -26,6 +26,12 @@ export const appConfig = {
       "blurb": "Open bills, balance and what was invoiced this month."
     },
     {
+      "path": "/quick-bill",
+      "label": "Quick Bill",
+      "endpoint": "POST /shop-bills",
+      "blurb": "Create bills quickly from predefined templates."
+    },
+    {
       "path": "/bills",
       "label": "Bills",
       "endpoint": "GET /client-portal/shop/bills",

@@ -26,6 +26,9 @@ sync_status_collection: Collection = _db.get_collection("sync_status")
 sync_queue_collection: Collection = _db.get_collection("sync_queue")
 sync_logs_collection: Collection = _db.get_collection("sync_logs")
 
+# Password reset tokens
+password_reset_tokens_collection: Collection = _db.get_collection("password_reset_tokens")
+
 
 def ensure_indexes():
     """Create all required indexes on the MAIN database."""
@@ -53,3 +56,8 @@ def ensure_indexes():
     sync_queue_collection.create_index([("status", 1), ("next_attempt_at", 1)])
     sync_queue_collection.create_index([("entity", 1), ("record_id", 1)], unique=True)
     sync_logs_collection.create_index([("operation", 1), ("started_at", -1)])
+
+    # Password reset tokens indexes
+    password_reset_tokens_collection.create_index("token", unique=True)
+    password_reset_tokens_collection.create_index([("user_id", 1), ("used", 1)])
+    password_reset_tokens_collection.create_index("expires_at")

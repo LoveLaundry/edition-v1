@@ -2,30 +2,32 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { appConfig } from '../config/app'
 import { useAuth } from '../auth/AuthContext'
 import clsx from 'clsx'
+import { useState } from 'react'
 
 export function AppShell() {
   const { user, signOut, laundries, currentLaundry, switchLaundry } = useAuth()
   const scope = user?.clientName ?? user?.laundry
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   // Only shown when this login really belongs to more than one laundry; with a
   // single association a switch control would be dead UI.
   const canSwitch = laundries.length > 1
 
   return (
     <div className="min-h-dvh bg-slate-50 text-slate-900">
-      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{appConfig.title}</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-semibold text-slate-900">{appConfig.title}</p>
             {scope ? <p className="truncate text-xs text-slate-500">{scope}</p> : null}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {canSwitch ? (
-              <label className="flex items-center gap-2">
+              <label className="hidden sm:flex items-center gap-2">
                 <span className="sr-only">Laundry</span>
                 <select
                   value={currentLaundry ?? ''}
                   onChange={(event) => void switchLaundry(event.target.value)}
-                  className="max-w-[14rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700"
+                  className="max-w-[14rem] rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900"
                 >
                   {laundries.map((item) => (
                     <option key={item.laundry_id} value={item.laundry_id}>
@@ -35,14 +37,15 @@ export function AppShell() {
                 </select>
               </label>
             ) : null}
-            <div className="text-right">
-              <p className="text-sm font-medium leading-tight">{user?.name}</p>
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium leading-tight text-slate-900">{user?.name}</p>
               <p className="text-[11px] uppercase tracking-wide text-slate-500">{user?.role}</p>
             </div>
             <button
               onClick={signOut}
-              className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+              className="rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
               aria-label="Sign out"
+              title="Sign out"
             >
               <svg
                 width="16"
@@ -60,33 +63,73 @@ export function AppShell() {
                 <path d="M21 12H9" />
               </svg>
             </button>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="sm:hidden rounded-lg border border-slate-200 p-2 text-slate-600 transition hover:bg-slate-100"
+              aria-label="Toggle menu"
+              aria-expanded={mobileMenuOpen}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                {mobileMenuOpen ? (
+                  <path d="M18 6L6 18M6 6l12 12" />
+                ) : (
+                  <>
+                    <path d="M3 12h18" />
+                    <path d="M3 6h18" />
+                    <path d="M3 18h18" />
+                  </>
+                )}
+              </svg>
+            </button>
           </div>
         </div>
 
-        <nav className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-3 pb-2">
-          {appConfig.nav.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === '/'}
-              className={({ isActive }) =>
-                clsx(
-                  'whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition',
-                  isActive
-                    ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:bg-slate-200/70',
-                )
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
+        <nav
+          className={clsx(
+            'mx-auto max-w-6xl px-3 pb-2 transition-all',
+            mobileMenuOpen ? 'block' : 'hidden sm:block'
+          )}
+        >
+          <div className="flex gap-1 overflow-x-auto sm:overflow-visible">
+            {appConfig.nav.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.path === '/'}
+                onClick={() => setMobileMenuOpen(false)}
+                className={({ isActive }) =>
+                  clsx(
+                    'whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all',
+                    isActive
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-900',
+                  )
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
         </nav>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         <Outlet />
       </main>
+
+      <footer className="mx-auto max-w-6xl px-4 py-6 text-center text-xs text-slate-400">
+        <p>© {new Date().getFullYear()} LoveLaundry System</p>
+      </footer>
     </div>
   )
 }

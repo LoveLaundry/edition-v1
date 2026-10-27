@@ -41,15 +41,32 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
         response.headers["X-XSS-Protection"] = "1; mode=block"
+        # Content Security Policy - restricts sources for scripts, styles, images, etc.
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https:; "
+            "font-src 'self' data:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'; "
+            "form-action 'self'; "
+            "base-uri 'self'; "
+            "require-trusted-types-for 'script'"
+        )
         # HSTS is only honoured over TLS; sending it on a plain-HTTP response
         # is meaningless and locks out local development behind HTTPS.
         if _is_https(request):
             response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains"
+                "max-age=31536000; includeSubDomains; preload"
             )
         response.headers["X-Request-Id"] = _resolve_request_id(request)
+        # Cache control for sensitive endpoints
+        if request.url.path in ["/auth/login", "/auth/refresh", "/client/auth/login"]:
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
+            response.headers["Pragma"] = "no-cache"
         return response
 
 

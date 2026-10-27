@@ -127,8 +127,10 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 
 from .routers.laundries import router as laundries_router  # noqa: E402
+from .routers.password_reset import router as password_reset_router  # noqa: E402
 app.include_router(laundries_router)
 app.include_router(admin_database_router)
+app.include_router(password_reset_router)
 
 
 @app.on_event("startup")

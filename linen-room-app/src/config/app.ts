@@ -21,6 +21,12 @@ export const appConfig = {
       "blurb": "Camera or gun scanner: collect, receive, ready, deliver."
     },
     {
+      "path": "/bulk-scan",
+      "label": "Bulk Scan",
+      "endpoint": "POST /linens/bulk-scan",
+      "blurb": "Process multiple linens at once with the same action."
+    },
+    {
       "path": "/inventory",
       "label": "Inventory",
       "endpoint": "GET /linens",

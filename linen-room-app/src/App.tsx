@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext'
 import { LoginPage } from './auth/LoginPage'
 import { AppShell } from './shell/AppShell'
 import { ScanPage } from './pages/ScanPage'
+import { BulkScanPage } from './pages/BulkScanPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { DiscrepanciesPage } from './pages/DiscrepanciesPage'
 import { TagsPage } from './pages/TagsPage'
@@ -30,6 +31,7 @@ function Router() {
         }
       >
         <Route path="/" element={<ScanPage />} />
+        <Route path="/bulk-scan" element={<BulkScanPage />} />
         <Route path="/inventory" element={<InventoryPage />} />
         <Route path="/discrepancies" element={<DiscrepanciesPage />} />
         <Route path="/tags" element={<TagsPage />} />

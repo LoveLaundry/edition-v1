@@ -7,6 +7,7 @@ import { TodayPage } from './pages/TodayPage'
 import { BillsPage } from './pages/BillsPage'
 import { OrdersPage } from './pages/OrdersPage'
 import { NewOrderPage } from './pages/NewOrderPage'
+import { QuickBillPage } from './pages/QuickBillPage'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth()
@@ -30,6 +31,7 @@ export function App() {
             <Route index element={<TodayPage />} />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="orders/new" element={<NewOrderPage />} />
+            <Route path="quick-bill" element={<QuickBillPage />} />
             <Route path="bills" element={<BillsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
