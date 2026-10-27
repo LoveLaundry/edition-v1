@@ -20,7 +20,7 @@ from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from ..crypto_helper import decrypt_dict
+from ..crypto_helper import decrypt_dict, get_search_token
 from ..database.main_db import gatepasses_collection, payments_collection, shop_bills_collection
 from ..services.gate_pass_records import create_gate_pass_record
 from ..models import GatePassCreate, GatePassItem
@@ -260,3 +260,120 @@ async def get_shop_bill(bill_id: str, session: dict = Depends(resolve_shop_scope
             for p in payment_docs
         ],
     }
+
+
+@router.get("/shop/summary")
+async def shop_summary(session: dict = Depends(resolve_shop_scope)):
+    """Headline numbers for the shop dashboard.
+
+    Totals are computed from stored documents only — this service owns the
+    arithmetic, the app never re-adds money.
+    """
+    from ..crypto_helper import get_search_token
+    from datetime import date
+
+    scope = session["client_scope"]
+    query = scoped_query(
+        {"client_name_search": get_search_token(scope["client_name"])},
+        scope["laundry_id"],
+    )
+
+    # Count orders
+    total_orders = await gatepasses_collection.count_documents(query)
+
+    # Count active (non-cancelled) orders
+    active_orders = await gatepasses_collection.count_documents(
+        {**query, "status": {"$ne": "CANCELLED"}}
+    )
+
+    # Calculate bills summary
+    outstanding = 0.0
+    invoiced_this_month = 0.0
+    scanned = 0
+
+    today = date.today()
+    start_of_month = date(today.year, today.month, 1)
+
+    cursor = shop_bills_collection.find(
+        query,
+        {
+            "grand_total": 1,
+            "paid_amount": 1,
+            "payment_status": 1,
+            "created_at": 1,
+        },
+    ).limit(5000)
+
+    async for doc in cursor:
+        scanned += 1
+        status = str(doc.get("payment_status") or "").upper()
+        if status == "CANCELLED":
+            continue
+        grand = round(float(doc.get("grand_total") or 0), 2)
+        if status in ("PENDING", "ISSUED", "PARTIALLY_PAID"):
+            outstanding += grand - round(float(doc.get("paid_amount") or 0), 2)
+        created = doc.get("created_at")
+        if isinstance(created, date):
+            created_day = created if type(created) is date else created.date()
+            if start_of_month <= created_day:
+                invoiced_this_month += grand
+
+    return {
+        "shop": scope["client_name"],
+        "laundry_id": scope["laundry_id"],
+        "total_orders": total_orders,
+        "active_orders": active_orders,
+        "outstanding_amount": round(outstanding, 2),
+        "invoiced_this_month": round(invoiced_this_month, 2),
+        "currency": "LKR",
+        "totals_scanned": scanned,
+        "totals_truncated": scanned >= 5000,
+    }
+
+
+@router.get("/shop/bills")
+async def list_shop_bills(
+    payment_status: str | None = Query(None),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=200),
+    session: dict = Depends(resolve_shop_scope),
+):
+    """This shop's bills at the currently selected laundry, newest first."""
+    from ..crypto_helper import get_search_token
+
+    scope = session["client_scope"]
+    query = scoped_query(
+        {"client_name_search": get_search_token(scope["client_name"])},
+        scope["laundry_id"],
+    )
+    if payment_status:
+        query = {**query, "payment_status": payment_status.strip().upper()}
+
+    total = await shop_bills_collection.count_documents(query)
+    cursor = (
+        shop_bills_collection.find(query)
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(limit)
+    )
+
+    items = []
+    async for doc in cursor:
+        clean = decrypt_dict(doc, BILL_SENSITIVE)
+        created = clean.get("created_at")
+        paid = float(clean.get("paid_amount") or 0)
+        total_amt = float(clean.get("grand_total") or 0)
+        
+        items.append({
+            "id": str(doc.get("_id")),
+            "bill_number": clean.get("bill_number"),
+            "created_at": created.isoformat() if hasattr(created, "isoformat") else created,
+            "grand_total": round(total_amt, 2),
+            "paid_amount": round(paid, 2),
+            "balance": round(total_amt - paid, 2),
+            "payment_status": clean.get("payment_status"),
+            "status": clean.get("status"),
+            "item_count": len(clean.get("items") or []),
+        })
+
+    return {"total": total, "skip": skip, "limit": limit, "items": items}

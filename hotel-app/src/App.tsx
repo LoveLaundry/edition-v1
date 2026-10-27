@@ -7,6 +7,8 @@ import { OverviewPage } from './pages/OverviewPage'
 import { GatePassesPage } from './pages/GatePassesPage'
 import { DeliveriesPage } from './pages/DeliveriesPage'
 import { InvoicesPage } from './pages/InvoicesPage'
+import { MonthlyMatrixPage } from './pages/MonthlyMatrixPage'
+import { StatementsPage } from './pages/StatementsPage'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth()
@@ -33,6 +35,8 @@ function Router() {
         <Route path="/gate-passes" element={<GatePassesPage />} />
         <Route path="/deliveries" element={<DeliveriesPage />} />
         <Route path="/invoices" element={<InvoicesPage />} />
+        <Route path="/monthly" element={<MonthlyMatrixPage />} />
+        <Route path="/statements" element={<StatementsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

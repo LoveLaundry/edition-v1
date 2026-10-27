@@ -39,6 +39,18 @@ export const appConfig = {
       "label": "Invoices",
       "endpoint": "GET /client-portal/bills",
       "blurb": "Invoices and their settlement status."
+    },
+    {
+      "path": "/monthly",
+      "label": "Monthly Matrix",
+      "endpoint": "GET /client-portal/monthly",
+      "blurb": "Day-by-day piece counts for month-end reconciliation."
+    },
+    {
+      "path": "/statements",
+      "label": "Statements",
+      "endpoint": "GET /client-portal/statements",
+      "blurb": "Monthly statement with invoiced, paid, and closing balance."
     }
   ] as NavItem[],
 }

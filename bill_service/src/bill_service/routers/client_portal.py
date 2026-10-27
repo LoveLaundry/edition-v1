@@ -34,6 +34,7 @@ from ..database.main_db import (
     deliveries_collection,
     gatepasses_collection,
     shop_bills_collection,
+    monthly_entries_collection,
 )
 from ..tenancy import scoped_query
 
@@ -366,6 +367,140 @@ async def portal_bill_detail(
         "balance": _money(grand - paid),
         "payment_status": decrypted.get("payment_status"),
         "notes": decrypted.get("notes"),
+    }
+
+
+@router.get("/monthly")
+async def portal_monthly_matrix(
+    year: int = Query(None, ge=2020, le=2030),
+    month: int = Query(None, ge=1, le=12),
+    scope: Dict[str, str] = Security(resolve_hotel_scope),
+) -> dict:
+    """Monthly quantity matrix for the hotel.
+
+    Returns day-by-day piece counts for the requested month, grouped by
+    item kind (sheets, towels, etc.). This is the data that feeds the hotel's
+    month-end reconciliation screen.
+    """
+    from datetime import date
+
+    today = date.today()
+    target_year = year if year is not None else today.year
+    target_month = month if month is not None else today.month
+
+    start, end = month_bounds(target_year, target_month)
+
+    # Fetch monthly entries for this hotel
+    query = _client_query(scope)
+    monthly_query = {
+        **query,
+        "year": target_year,
+        "month": target_month,
+        "kind": {"$in": ["gate_pass", "delivery", "rewash"]},
+    }
+
+    entries = await monthly_entries_collection.find(monthly_query).to_list(length=100)
+
+    # Build matrix by item and day
+    matrix: Dict[str, Dict[str, float]] = {}
+    for entry in entries:
+        kind = entry.get("kind", "")
+        day = entry.get("day", 1)
+        values = entry.get("values", {})
+        
+        for item_name, qty in values.items():
+            if item_name not in matrix:
+                matrix[item_name] = {}
+            if day not in matrix[item_name]:
+                matrix[item_name][str(day)] = 0
+            matrix[item_name][str(day)] += float(qty or 0)
+
+    return {
+        "hotel": scope["client_name"],
+        "year": target_year,
+        "month": target_month,
+        "matrix": matrix,
+        "period_start": start.isoformat() if hasattr(start, "isoformat") else start,
+        "period_end": end.isoformat() if hasattr(end, "isoformat") else end,
+    }
+
+
+@router.get("/statements")
+async def portal_statements(
+    year: int = Query(None, ge=2020, le=2030),
+    month: int = Query(None, ge=1, le=12),
+    scope: Dict[str, str] = Security(resolve_hotel_scope),
+) -> dict:
+    """Statement summary for the hotel (monthly invoice totals).
+
+    Returns a statement-style view: what was invoiced, what was paid, and
+    the closing balance for the requested month.
+    """
+    from datetime import date
+
+    today = date.today()
+    target_year = year if year is not None else today.year
+    target_month = month if month is not None else today.month
+
+    start, end = month_bounds(target_year, target_month)
+    query = _client_query(scope)
+
+    # Scan bills in the requested month
+    cursor = bills_collection.find(
+        query,
+        {
+            "grand_total": 1,
+            "paid_amount": 1,
+            "payment_status": 1,
+            "created_at": 1,
+        },
+    ).limit(5000)
+
+    opening_balance = 0.0
+    invoiced_total = 0.0
+    paid_total = 0.0
+    closing_balance = 0.0
+    scanned = 0
+
+    async for doc in cursor:
+        scanned += 1
+        status = str(doc.get("payment_status") or "").upper()
+        if status == "CANCELLED":
+            continue
+        
+        grand = _money(doc.get("grand_total"))
+        paid = _money(doc.get("paid_amount"))
+        
+        created = doc.get("created_at")
+        if isinstance(created, date):
+            created_day = created if type(created) is date else created.date()
+            if start.date() <= created_day < end.date():
+                invoiced_total += grand
+                paid_total += paid
+            else:
+                # Before this month - part of opening balance
+                if status in ("PENDING", "ISSUED", "PARTIALLY_PAID"):
+                    opening_balance += grand - paid
+                # Already paid - no balance carried forward
+        else:
+            if status in ("PENDING", "ISSUED", "PARTIALLY_PAID"):
+                opening_balance += grand - paid
+
+    closing_balance = opening_balance + invoiced_total - paid_total
+
+    return {
+        "hotel": scope["client_name"],
+        "year": target_year,
+        "month": target_month,
+        "opening_balance": round(opening_balance, 2),
+        "invoiced_amount": round(invoiced_total, 2),
+        "paid_amount": round(paid_total, 2),
+        "closing_balance": round(closing_balance, 2),
+        "currency": "LKR",
+        "period_start": start.isoformat() if hasattr(start, "isoformat") else start,
+        "period_end": end.isoformat() if hasattr(end, "isoformat") else end,
+        "totals_scanned": scanned,
+        "totals_truncated": scanned >= 5000,
     }
 
 
