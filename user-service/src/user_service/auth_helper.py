@@ -1,10 +1,13 @@
 import os
+import logging
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPBearer
 import jwt
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 # pydantic-settings reads .env into its own model, but it does NOT export the
 # values into os.environ, so anything that reads the environment directly
@@ -27,23 +30,40 @@ DISABLED_STATUSES = {"inactive", "disabled", "suspended", "blocked", "deleted"}
 
 def create_access_token(data: dict, expires_in_hours: int = 24) -> str:
     """Create a signed JWT token containing user info."""
+    if expires_in_hours < 1 or expires_in_hours > 168:  # Max 7 days
+        raise ValueError("expires_in_hours must be between 1 and 168")
     payload = data.copy()
     now = datetime.now(timezone.utc)
     payload["exp"] = now + timedelta(hours=expires_in_hours)
     payload["iat"] = now
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    try:
+        return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    except Exception as e:
+        logger.error("Failed to create access token", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create authentication token"
+        )
 
 
 def verify_token(token: str) -> dict:
     """Verify and decode a JWT token."""
+    if not token or not isinstance(token, str):
+        logger.warning("Invalid token format provided")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication token",
+        )
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
         return payload
     except jwt.ExpiredSignatureError:
+        logger.warning("Expired token attempt")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired"
         )
-    except jwt.InvalidTokenError:
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Invalid token attempt: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",

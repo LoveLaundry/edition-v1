@@ -1,7 +1,7 @@
 from .app_time import stamp
 from datetime import datetime
 from typing import Union, Literal, Optional
-from pydantic import BaseModel, Field, field_serializer
+from pydantic import BaseModel, Field, field_serializer, field_validator, ConfigDict
 
 
 # ─── Order lifecycle ──────────────────────────────────────────────────────────
@@ -44,12 +44,24 @@ class StatusHistoryEntry(BaseModel):
 
 class SpecificationSchema(BaseModel):
     """A variant/specification of a line item (e.g. colour + size), each with its own agreed price."""
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     specification: str
     unit_price: float
 
+    @field_validator('unit_price')
+    @classmethod
+    def validate_unit_price(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError('unit_price must be non-negative')
+        if v > 1000000:
+            raise ValueError('unit_price must not exceed 1,000,000')
+        return v
+
 
 class LineItemSchema(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
     item_name: str
     category: str | None = None
     unit_price: float
@@ -58,25 +70,77 @@ class LineItemSchema(BaseModel):
     # unit_price remains the base/agreement price and is what bill_service matches by item_name.
     specifications: list[SpecificationSchema] | None = None
 
+    @field_validator('item_name')
+    @classmethod
+    def validate_item_name(cls, v: str) -> str:
+        if len(v) < 1 or len(v) > 200:
+            raise ValueError('item_name must be between 1 and 200 characters')
+        return v
+
+    @field_validator('unit_price')
+    @classmethod
+    def validate_unit_price(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError('unit_price must be non-negative')
+        if v > 1000000:
+            raise ValueError('unit_price must not exceed 1,000,000')
+        return v
+
 
 class QuotationCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
     client_name: str
     quotation_title: str | None = None
     line_items: list[LineItemSchema] = Field(default_factory=list)
     status: str = "draft"
     tag: Literal["shop", "hotel"] = "shop"  # Tag for filtering quotations
 
+    @field_validator('client_name')
+    @classmethod
+    def validate_client_name(cls, v: str) -> str:
+        if len(v) < 1 or len(v) > 200:
+            raise ValueError('client_name must be between 1 and 200 characters')
+        return v
+
+    @field_validator('status')
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in ORDER_STATUSES:
+            raise ValueError(f'status must be one of {ORDER_STATUSES}')
+        return v
+
 
 class QuotationUpdate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
     client_name: str | None = None
     quotation_title: str | None = None
     line_items: list[LineItemSchema] | None = None
     status: str | None = None
     tag: Literal["shop", "hotel"] | None = None
 
+    @field_validator('status')
+    @classmethod
+    def validate_status(cls, v: str | None) -> str | None:
+        if v is not None and v not in ORDER_STATUSES:
+            raise ValueError(f'status must be one of {ORDER_STATUSES}')
+        return v
+
 
 class QuotationAdvanceStatus(BaseModel):
     """Advance an order to the next lifecycle stage."""
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
+    status: str
+    note: str | None = None
+
+    @field_validator('status')
+    @classmethod
+    def validate_status(cls, v: str) -> str:
+        if v not in ORDER_STATUSES:
+            raise ValueError(f'status must be one of {ORDER_STATUSES}')
+        return v
 
     status: str
     note: Optional[str] = None

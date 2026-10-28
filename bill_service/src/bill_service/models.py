@@ -1,7 +1,7 @@
 from pydantic import AliasChoices
 from datetime import datetime, timezone
 from typing import Annotated, Dict, List, Optional
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, field_validator
 
 PyObjectId = Annotated[str, BeforeValidator(str)]
 
@@ -12,6 +12,7 @@ class Verification(BaseModel):
     Mirrors the payload returned by
     `services.verification_service.get_verification`.
     """
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     status: str = "PENDING"
     verified: bool = False
@@ -23,6 +24,8 @@ class Verification(BaseModel):
 
 # --- Gate Pass / Receiving ---
 class GatePassItem(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
     item_name: str
     category: Optional[str] = None
     specification: Optional[str] = None
@@ -35,8 +38,17 @@ class GatePassItem(BaseModel):
     mismatch_notes: Optional[str] = None
     rewashed: bool = Field(default=False, description="Tagged as a free re-wash; never billed")
 
+    @field_validator('item_name')
+    @classmethod
+    def validate_item_name(cls, v: str) -> str:
+        if len(v) < 1 or len(v) > 200:
+            raise ValueError('item_name must be between 1 and 200 characters')
+        return v
+
 
 class GatePassCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+    
     gate_pass_number: str
     manual_gate_pass_number: Optional[str] = None
     manual_bill_number: Optional[str] = None
@@ -44,11 +56,18 @@ class GatePassCreate(BaseModel):
     client_name: str
     receiving_date: datetime
     received_by: str
-    items: List[GatePassItem] = Field(min_length=1)
+    items: List[GatePassItem] = Field(min_length=1, max_length=500)
     notes: Optional[str] = None
     quotation_id: Optional[str] = None
     status: str = "RECEIVED"  # RECEIVED or DRAFT (monthly-generated passes start in DRAFT)
     origin: Optional[dict] = None  # {"kind": "monthly", "year": int, "month": int, "day": int, "quotation_id": str}
+
+    @field_validator('client_name')
+    @classmethod
+    def validate_client_name(cls, v: str) -> str:
+        if len(v) < 1 or len(v) > 200:
+            raise ValueError('client_name must be between 1 and 200 characters')
+        return v
 
 
 class GatePassAdjustment(BaseModel):
@@ -58,11 +77,19 @@ class GatePassAdjustment(BaseModel):
     controlled adjustment request. ``specification`` is optional so a request
     always targets the correct variant of an item on the gate pass.
     """
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     item_name: str
     specification: Optional[str] = None
     corrected_qty: float = Field(ge=0)
     reason: str = Field(min_length=1, description="Reason is mandatory")
+
+    @field_validator('reason')
+    @classmethod
+    def validate_reason(cls, v: str) -> str:
+        if len(v) > 500:
+            raise ValueError('reason must not exceed 500 characters')
+        return v
 
 
 class GatePassDateUpdate(BaseModel):
@@ -72,11 +99,12 @@ class GatePassDateUpdate(BaseModel):
 
 class GatePassUpdate(BaseModel):
     """Full edit of a gate pass that is not yet fully delivered."""
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     client_name: Optional[str] = None
     received_by: Optional[str] = None
     notes: Optional[str] = None
-    items: Optional[List[GatePassItem]] = Field(default=None, min_length=1)
+    items: Optional[List[GatePassItem]] = Field(default=None, min_length=1, max_length=500)
 
 
 class GatePassMarkDelivered(BaseModel):

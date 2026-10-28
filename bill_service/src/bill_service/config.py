@@ -1,4 +1,4 @@
-from pydantic import AliasChoices, Field
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -41,6 +41,33 @@ class Settings(BaseSettings):
     sync_retry_base_delay_seconds: int = Field(default=3, validation_alias=AliasChoices("SYNC_RETRY_BASE_DELAY_SECONDS"))
     sync_worker_poll_seconds: float = Field(default=1.0, validation_alias=AliasChoices("SYNC_WORKER_POLL_SECONDS"))
     sync_enabled: bool = Field(default=True, validation_alias=AliasChoices("SYNC_ENABLED"))
+
+    @field_validator('sync_retry_max_attempts')
+    @classmethod
+    def validate_retry_attempts(cls, v):
+        if v < 1:
+            raise ValueError('sync_retry_max_attempts must be at least 1')
+        if v > 20:
+            raise ValueError('sync_retry_max_attempts must not exceed 20')
+        return v
+
+    @field_validator('sync_retry_base_delay_seconds')
+    @classmethod
+    def validate_retry_delay(cls, v):
+        if v < 1:
+            raise ValueError('sync_retry_base_delay_seconds must be at least 1')
+        if v > 60:
+            raise ValueError('sync_retry_base_delay_seconds must not exceed 60')
+        return v
+
+    @field_validator('sync_worker_poll_seconds')
+    @classmethod
+    def validate_poll_seconds(cls, v):
+        if v < 0.1:
+            raise ValueError('sync_worker_poll_seconds must be at least 0.1')
+        if v > 60:
+            raise ValueError('sync_worker_poll_seconds must not exceed 60')
+        return v
 
     # ─── Resolved role databases ───────────────────────────────────────────
     def resolve_main_uri(self) -> str:

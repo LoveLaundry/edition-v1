@@ -1,4 +1,5 @@
 from typing import Union
+import uuid
 
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.responses import JSONResponse
@@ -59,8 +60,11 @@ import logging
 import os
 import sentry_sdk
 
-# Configure logging first
-logging.basicConfig(level=logging.INFO)
+# Configure logging first with structured format
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - [%(request_id)s]'
+)
 logger = logging.getLogger(__name__)
 
 # Known production frontend origins. Used as a safe default so the API is never
@@ -122,8 +126,16 @@ apply_security(app, rate_limit=300)
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    logger.error("Unhandled exception", exc_info=exc)
-    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+    request_id = request.headers.get("x-request-id", str(uuid.uuid4())[:16])
+    logger.error(
+        f"Unhandled exception [request_id: {request_id}]",
+        exc_info=exc,
+        extra={"request_id": request_id, "path": request.url.path}
+    )
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error", "request_id": request_id}
+    )
 
 
 from .routers.laundries import router as laundries_router  # noqa: E402
@@ -135,21 +147,28 @@ app.include_router(password_reset_router)
 
 @app.on_event("startup")
 def startup_event():
+    request_id = str(uuid.uuid4())[:16]
+    logger.info(f"Startup event initiated [request_id: {request_id}]")
+    
     try:
         if DB_TYPE in (DatabaseType.POSTGRESQL, DatabaseType.SQLITE):
             from .database import Base, engine
             if engine:
                 Base.metadata.create_all(bind=engine)
+                logger.info("SQL schema created successfully")
         else:
             ensure_indexes()
-    except Exception:
-        logger.exception("Failed to initialize database schema on startup")
+            logger.info("MongoDB indexes ensured successfully")
+    except Exception as e:
+        logger.exception(f"Failed to initialize database schema on startup [request_id: {request_id}]")
+        # Continue startup even if schema init fails
 
     if not ON_VERCEL:
         try:
             synchronization_service.start_worker()
-        except Exception:
-            logger.exception("Failed to start sync worker")
+            logger.info("Sync worker started successfully")
+        except Exception as e:
+            logger.exception(f"Failed to start sync worker [request_id: {request_id}]")
 
 
 @app.on_event("shutdown")

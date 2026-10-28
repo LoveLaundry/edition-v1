@@ -2,9 +2,12 @@ import os
 import json
 import hashlib
 import hmac
+import logging
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 # See auth_helper: pydantic-settings does not export .env into os.environ.
 load_dotenv()
@@ -13,6 +16,10 @@ _master_key = os.getenv("MASTER_KEY")
 if not _master_key:
     raise RuntimeError("FATAL: MASTER_KEY environment variable is not set. Refusing to start.")
 MASTER_KEY_ENV = _master_key
+
+# Validate master key length (should be at least 32 bytes for AES-256)
+if len(MASTER_KEY_ENV.encode()) < 32:
+    logger.warning("MASTER_KEY is shorter than recommended 32 bytes for AES-256")
 
 # Derive KEK and HMAC Key
 KEK = hashlib.sha256((MASTER_KEY_ENV + "-kek").encode()).digest()
@@ -29,17 +36,21 @@ ENVELOPE_KEY_ID = "master-key-v1"
 def _validate_metadata(meta: dict) -> None:
     """Reject envelopes this build cannot read, instead of guessing."""
     if not isinstance(meta, dict):
+        logger.error("Encryption metadata is not a dict")
         raise ValueError("Encryption metadata is malformed")
 
     version = meta.get("version")
     if version is not None and int(version) != ENVELOPE_VERSION:
+        logger.warning(f"Unsupported encryption envelope version: {version!r}")
         raise ValueError(f"Unsupported encryption envelope version: {version!r}")
 
     algorithm = meta.get("algorithm")
     if algorithm is not None and str(algorithm).strip().upper() != ENVELOPE_ALGORITHM:
+        logger.warning(f"Unsupported encryption algorithm: {algorithm!r}")
         raise ValueError(f"Unsupported encryption algorithm: {algorithm!r}")
 
     if not isinstance(meta.get("wrappedDek"), dict):
+        logger.error("Encryption metadata missing wrappedDek")
         raise ValueError("Encryption metadata is missing the wrapped data key")
 
 
@@ -47,12 +58,19 @@ def get_search_token(value: str) -> str:
     """Generate a deterministic, secure search token for exact match queries."""
     if not value:
         return ""
+    if not isinstance(value, str):
+        logger.warning("get_search_token received non-string value")
+        return ""
     normalized = value.strip().lower()
     return hmac.new(HMAC_KEY, normalized.encode(), hashlib.sha256).hexdigest()
 
 
 def encrypt_field(plaintext: str, dek: bytes) -> dict:
     """Encrypt a single string field using AES-256-GCM with a DEK."""
+    if not isinstance(plaintext, str):
+        raise TypeError("encrypt_field requires string plaintext")
+    if len(dek) != 32:
+        raise ValueError("DEK must be 32 bytes for AES-256")
     aesgcm = AESGCM(dek)
     nonce = os.urandom(12)
     ciphertext = aesgcm.encrypt(nonce, plaintext.encode("utf-8"), None)
@@ -61,6 +79,10 @@ def encrypt_field(plaintext: str, dek: bytes) -> dict:
 
 def decrypt_field(encrypted_data: dict, dek: bytes) -> str:
     """Decrypt a single string field using AES-256-GCM with a DEK."""
+    if not isinstance(encrypted_data, dict):
+        raise TypeError("encrypted_data must be a dict")
+    if len(dek) != 32:
+        raise ValueError("DEK must be 32 bytes for AES-256")
     try:
         aesgcm = AESGCM(dek)
         nonce = bytes.fromhex(encrypted_data["nonce"])
@@ -68,7 +90,8 @@ def decrypt_field(encrypted_data: dict, dek: bytes) -> str:
         decrypted_bytes = aesgcm.decrypt(nonce, ciphertext, None)
         return decrypted_bytes.decode("utf-8")
     except Exception as e:
-        raise ValueError(f"Decryption failed ({type(e).__name__})") from e
+        logger.error(f"Decryption failed: {type(e).__name__}")
+        raise ValueError(f"Decryption failed") from e
 
 
 def encrypt_dict(data: dict, sensitive_fields: list) -> dict:
@@ -129,8 +152,12 @@ def decrypt_dict(encrypted_data: dict, sensitive_fields: list) -> dict:
     if not encrypted_data:
         return encrypted_data
 
+    if not isinstance(encrypted_data, dict):
+        raise TypeError("encrypted_data must be a dict")
+
     if "encryption_metadata" not in encrypted_data:
         # If no metadata, fail/reject
+        logger.error("Encryption metadata missing during decryption")
         raise ValueError("Encryption metadata missing: document is not secure.")
 
     meta = encrypted_data["encryption_metadata"]
@@ -144,7 +171,8 @@ def decrypt_dict(encrypted_data: dict, sensitive_fields: list) -> dict:
         wrapped_dek_bytes = bytes.fromhex(wrapped_dek["ciphertext"])
         dek = aesgcm_kek.decrypt(dek_nonce, wrapped_dek_bytes, None)
     except Exception as e:
-        raise ValueError(f"Failed to unwrap DEK ({type(e).__name__})") from e
+        logger.error(f"Failed to unwrap DEK: {type(e).__name__}")
+        raise ValueError(f"Failed to unwrap DEK") from e
 
     # 2. Decrypt sensitive fields
     decrypted_data = {}
@@ -160,11 +188,15 @@ def decrypt_dict(encrypted_data: dict, sensitive_fields: list) -> dict:
             # Checked before the search-token rule below: a sensitive field
             # whose name happens to end in "_search" holds real (encrypted)
             # data and must be decrypted, not silently dropped.
-            dec_val_str = decrypt_field(val, dek)
-            if val.get("is_json"):
-                decrypted_data[key] = json.loads(dec_val_str)
-            else:
-                decrypted_data[key] = dec_val_str
+            try:
+                dec_val_str = decrypt_field(val, dek)
+                if val.get("is_json"):
+                    decrypted_data[key] = json.loads(dec_val_str)
+                else:
+                    decrypted_data[key] = dec_val_str
+            except Exception as e:
+                logger.error(f"Failed to decrypt field {key}: {type(e).__name__}")
+                raise
         elif key.endswith("_search"):
             # Derived search tokens never leave the service: they exist so the
             # database can match an exact value without decrypting.

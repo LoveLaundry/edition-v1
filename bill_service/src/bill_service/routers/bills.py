@@ -58,8 +58,9 @@ def _serialize(doc: dict) -> dict:
     try:
         decrypted = decrypt_dict(doc, SENSITIVE_FIELDS)
     except Exception as e:
+        logger.error(f"Failed to decrypt document: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to decrypt document: {str(e)}"
+            status_code=500, detail=f"Failed to decrypt document"
         )
 
     decrypted["id"] = str(decrypted["_id"])
@@ -111,8 +112,9 @@ def _serialize_payment(doc: dict) -> dict:
     try:
         decrypted = decrypt_dict(doc, PAYMENT_SENSITIVE_FIELDS)
     except Exception as e:
+        logger.error(f"Failed to decrypt payment: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to decrypt payment: {str(e)}"
+            status_code=500, detail=f"Failed to decrypt payment"
         )
     decrypted["id"] = str(decrypted["_id"])
     del decrypted["_id"]
@@ -129,9 +131,14 @@ async def _owned_bill(bill_id: str, current_user: dict):
 
 
 def _parse_object_id(bill_id: str) -> ObjectId:
+    if not bill_id or not isinstance(bill_id, str):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid bill ID format"
+        )
     try:
         return ObjectId(bill_id)
     except InvalidId:
+        logger.warning(f"Invalid ObjectId attempted: {bill_id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid bill ID"
         )
@@ -145,6 +152,11 @@ async def log_audit(
     details: dict = None,
     laundry_id: str | None = None,
 ):
+    """Log audit event with validation and error handling."""
+    if not user_id or not action or not entity or not entity_id:
+        logger.warning(f"Skipping audit log with missing required fields: user_id={user_id}, action={action}, entity={entity}, entity_id={entity_id}")
+        return
+    
     # One writer, one schema — see router_utils.log_audit (canonical keys plus
     # the legacy aliases the report UI renders).
     from ..router_utils import log_audit as canonical_log_audit

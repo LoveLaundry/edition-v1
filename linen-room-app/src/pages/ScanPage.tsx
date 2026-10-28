@@ -91,6 +91,7 @@ export function ScanPage() {
               characteristicRef.current = characteristic
               setBluetoothConnected(true)
               setNotice(`Connected to ${device.name || 'Bluetooth Scanner'}`)
+              console.log('Bluetooth connected to:', device.name)
               return
             } catch (e) {
               // Continue to next characteristic
@@ -109,6 +110,7 @@ export function ScanPage() {
       const errorMessage = err instanceof Error ? err.message : 'Failed to connect to Bluetooth device'
       setBluetoothError(errorMessage)
       setBluetoothConnected(false)
+      console.error('Bluetooth connection error:', errorMessage)
     }
   }
 
@@ -164,7 +166,10 @@ export function ScanPage() {
       const response = await dataApi.get<Linen>(`/linens/by-code/${encodeURIComponent(trimmed)}`)
       setLinen(response.data)
     } catch (caught) {
-      setError(errorMessage(caught))
+      const errorMsg = errorMessage(caught)
+      setError(errorMsg)
+      // Log error for debugging
+      console.error('Scan lookup failed:', errorMsg)
     } finally {
       setBusy(false)
     }
@@ -184,7 +189,9 @@ export function ScanPage() {
       setNotice(`Applied "${action}" to ${linen.linen_id}.`)
       setCode('')
     } catch (caught) {
-      setError(errorMessage(caught))
+      const errorMsg = errorMessage(caught)
+      setError(errorMsg)
+      console.error('Scan action failed:', errorMsg)
     } finally {
       setBusy(false)
     }

@@ -163,6 +163,11 @@ export function BulkScanPage() {
       return
     }
 
+    if (codeList.length > 500) {
+      setError('Maximum 500 codes per bulk scan')
+      return
+    }
+
     setBusy(true)
     setError(null)
     setResults(null)
@@ -176,7 +181,9 @@ export function BulkScanPage() {
       setResults(response.data)
       setCodes('')
     } catch (caught) {
-      setError(errorMessage(caught))
+      const errorMsg = errorMessage(caught)
+      setError(errorMsg)
+      console.error('Bulk scan failed:', errorMsg)
     } finally {
       setBusy(false)
     }
