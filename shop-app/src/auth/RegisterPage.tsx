@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { appConfig } from '../config/app'
 
