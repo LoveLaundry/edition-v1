@@ -10,6 +10,7 @@ services:
       CHAT_API_KEY: ${CHAT_API_KEY:-}
     restart: unless-stopped
     mem_limit: 256m
+    mem_reservation: 128m
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 30s
@@ -17,6 +18,11 @@ services:
       retries: 3
       start_period: 20s
     networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   bills-backend:
     build:
@@ -24,6 +30,7 @@ services:
     env_file: ./backend.env
     restart: unless-stopped
     mem_limit: 256m
+    mem_reservation: 128m
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 30s
@@ -31,6 +38,11 @@ services:
       retries: 3
       start_period: 20s
     networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   user-backend:
     build:
@@ -40,6 +52,7 @@ services:
       MONGODB_COLLECTION: users
     restart: unless-stopped
     mem_limit: 256m
+    mem_reservation: 128m
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 30s
@@ -47,6 +60,11 @@ services:
       retries: 3
       start_period: 20s
     networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   workers-backend:
     build:
@@ -54,6 +72,7 @@ services:
     env_file: ./backend.env
     restart: unless-stopped
     mem_limit: 256m
+    mem_reservation: 128m
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 30s
@@ -61,6 +80,11 @@ services:
       retries: 3
       start_period: 20s
     networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   mgmt-backend:
     build:
@@ -68,6 +92,7 @@ services:
     env_file: ./backend.env
     restart: unless-stopped
     mem_limit: 256m
+    mem_reservation: 128m
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
       interval: 30s
@@ -75,6 +100,11 @@ services:
       retries: 3
       start_period: 20s
     networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   ai-backend:
     build:
@@ -84,6 +114,7 @@ services:
       LOVE_AI_API_KEYS: ${LOVE_AI_API_KEYS:-}
     restart: unless-stopped
     mem_limit: 256m
+    mem_reservation: 128m
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
       interval: 30s
@@ -91,6 +122,11 @@ services:
       retries: 3
       start_period: 20s
     networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   web:
     build:
@@ -121,7 +157,59 @@ services:
         condition: service_healthy
     restart: unless-stopped
     mem_limit: 256m
+    mem_reservation: 128m
     networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  shop-app:
+    build:
+      context: ../shop-app
+      args:
+        VITE_USER_API_URL: /api/user
+        VITE_BILL_API_URL: /api/bills
+    ports:
+      - "3001:80"
+    depends_on:
+      bills-backend:
+        condition: service_healthy
+      user-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 128m
+    networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  hotel-app:
+    build:
+      context: ../hotel-app
+      args:
+        VITE_USER_API_URL: /api/user
+        VITE_BILL_API_URL: /api/bills
+    ports:
+      - "3002:80"
+    depends_on:
+      bills-backend:
+        condition: service_healthy
+      user-backend:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 128m
+    networks: [app]
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   app:

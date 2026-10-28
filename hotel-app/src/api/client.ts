@@ -37,6 +37,10 @@ for (const instance of [authApi, dataApi]) {
           window.location.assign('/login')
         }
       }
+      // Log network errors for debugging
+      if (!error.response) {
+        console.error('Network error:', error.message)
+      }
       return Promise.reject(error)
     },
   )
@@ -47,7 +51,12 @@ export function errorMessage(error: unknown): string {
     const detail = (error.response?.data as { detail?: unknown } | undefined)?.detail
     if (typeof detail === 'string' && detail.trim()) return detail
     if (error.code === 'ECONNABORTED') return 'The server took too long to respond. Try again.'
+    if (error.code === 'ECONNREFUSED') return 'Cannot reach the server. It may be down.'
     if (!error.response) return 'Cannot reach the server. Check your connection.'
+    const status = error.response?.status
+    if (status === 429) return 'Too many requests. Please wait and try again.'
+    if (status === 500) return 'Server error. Please try again later.'
+    if (status === 503) return 'Service temporarily unavailable. Please try again later.'
   }
   return 'Something went wrong. Try again.'
 }

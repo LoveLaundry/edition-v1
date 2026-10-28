@@ -35,7 +35,9 @@ export function useQuery<T>(path: string, params?: Params): QueryResult<T> {
       })
       setData(response.data)
     } catch (caught) {
-      setError(errorMessage(caught))
+      const errorMsg = errorMessage(caught)
+      setError(errorMsg)
+      console.error('Query failed:', pathRef.current, errorMsg)
     } finally {
       setLoading(false)
     }
