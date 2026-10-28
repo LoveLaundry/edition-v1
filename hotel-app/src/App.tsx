@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import { LoginPage } from './auth/LoginPage'
+import { RegisterPage } from './auth/RegisterPage'
 import { AppShell } from './shell/AppShell'
 import { OverviewPage } from './pages/OverviewPage'
 import { GatePassesPage } from './pages/GatePassesPage'
@@ -24,6 +25,7 @@ function Router() {
         path="/login"
         element={isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />}
       />
+      <Route path="/register" element={<RegisterPage />} />
       <Route
         element={
           <RequireAuth>

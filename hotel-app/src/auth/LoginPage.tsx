@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { errorMessage } from '../api/client'
 import { appConfig } from '../config/app'
 import type { Association } from './associations'
@@ -136,6 +136,13 @@ export function LoginPage() {
             >
               {pending ? 'Signing in…' : 'Sign in'}
             </button>
+
+            <p className="text-center text-sm text-slate-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-medium text-slate-900 underline underline-offset-2">
+                Register
+              </Link>
+            </p>
           </form>
         )}
       </div>

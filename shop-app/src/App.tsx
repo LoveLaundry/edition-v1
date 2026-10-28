@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { AuthProvider, useAuth } from './auth/AuthContext'
 import { LoginPage } from './auth/LoginPage'
+import { RegisterPage } from './auth/RegisterPage'
 import { AppShell } from './shell/AppShell'
 import { TodayPage } from './pages/TodayPage'
 import { BillsPage } from './pages/BillsPage'
@@ -21,6 +22,7 @@ export function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route
             element={
               <RequireAuth>
