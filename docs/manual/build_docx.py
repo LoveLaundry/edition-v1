@@ -291,7 +291,7 @@ def main():
     footer_page_numbers(doc)
 
     # cover page
-    cover_png = os.path.join(D, "..", "..", "media-output", "img-mvlyao1h-cd5f6c4a.png")
+    cover_png = os.path.join(D, "assets", "cover-tech.png")
     if os.path.exists(cover_png):
         doc.add_picture(os.path.abspath(cover_png), width=Cm(9.6))
         doc.paragraphs[-1].alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -303,7 +303,7 @@ def main():
         ("Rasindu Dulshan Siriwardhana", 12, INK, True),
         ("BSc. (Hons) Engineering (Computer Engineering) · Second Class Upper Division", 9.5, GREY, False),
         ("Faculty of Engineering, University of Ruhuna", 9.5, GREY, False),
-        ("First Edition · October 2026", 9, GREY, False),
+        ("Second Edition · November 2026", 9, GREY, False),
     ):
         para = doc.add_paragraph()
         para.alignment = WD_ALIGN_PARAGRAPH.CENTER
