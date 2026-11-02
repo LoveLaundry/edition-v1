@@ -20,6 +20,7 @@ loyalty_collection: AsyncIOMotorCollection = _db.get_collection("loyalty_account
 audit_collection: AsyncIOMotorCollection = _db.get_collection("audit_logs")
 linens_collection: AsyncIOMotorCollection = _db.get_collection("linens")
 linen_events_collection: AsyncIOMotorCollection = _db.get_collection("linen_events")
+live_clocks_collection: AsyncIOMotorCollection = _db.get_collection("live_clocks")
 returns_collection: AsyncIOMotorCollection = _db.get_collection("returns")
 adjustments_collection: AsyncIOMotorCollection = _db.get_collection("adjustments")
 idempotency_collection: AsyncIOMotorCollection = _db.get_collection("idempotency_keys")
@@ -126,6 +127,8 @@ async def ensure_indexes():
     await linens_collection.create_index("created_at")
     await linens_collection.create_index("last_scanned_date")
 
+    await live_clocks_collection.create_index("laundry_id", unique=True)
+
     # Linen events indexes
     await linen_events_collection.create_index("linen_id")
     await linen_events_collection.create_index("laundry_id")
@@ -146,6 +149,7 @@ async def ensure_indexes():
     # Adjustments indexes
     await adjustments_collection.create_index("gate_pass_id")
     await adjustments_collection.create_index("status")
+    await adjustments_collection.create_index("laundry_id")
     await adjustments_collection.create_index("created_at")
 
     # Idempotency keys (unique per user:key)
@@ -172,6 +176,7 @@ async def ensure_indexes():
     # Bill Templates indexes
     await bill_templates_collection.create_index("name")
     await bill_templates_collection.create_index("client_name_search")
+    await bill_templates_collection.create_index("laundry_id")
 
     # Legacy invoices indexes
     await legacy_invoices_collection.create_index("invoice_number", unique=True)

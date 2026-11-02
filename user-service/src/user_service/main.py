@@ -1,5 +1,4 @@
 from typing import Union
-import uuid
 
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.responses import JSONResponse
@@ -14,6 +13,8 @@ from .auth_helper import (
     DISABLED_STATUSES,
     create_access_token,
     get_current_user,
+    is_platform_admin,
+    require_platform_admin,
     require_role,
 )
 from .schemas import (
@@ -34,6 +35,13 @@ from .memberships import (
     revoke,
     stored_memberships,
 )
+from .entity_memberships import (
+    build_entity_claims,
+    effective_entity_memberships,
+    grant_entity_membership,
+    revoke_entity_membership,
+    normalize_entity_id,
+)
 from .client_associations import (
     list_associations as list_client_associations,
     switch_to as switch_client_laundry,
@@ -45,6 +53,8 @@ from .client_accounts import (
     create_client_account,
     get_client_session,
     list_for_laundry as list_client_accounts,
+    normalize_client_type,
+    normalize_role,
     public_view as client_public_view,
     set_status as set_client_status,
 )
@@ -52,6 +62,9 @@ from .database.main_db import ensure_indexes
 from .database.connection_manager import close_all
 from .security import apply_security, insecure_flags
 from .routers.admin_database import router as admin_database_router
+from .routers.laundries import router as laundries_router
+from .routers.hotels import router as hotels_router
+from .routers.shops import router as shops_router
 from .services import synchronization_service
 from .tenancy import resolve_laundry_id
 
@@ -60,11 +73,8 @@ import logging
 import os
 import sentry_sdk
 
-# Configure logging first with structured format
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - [%(request_id)s]'
-)
+# Configure logging first
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Known production frontend origins. Used as a safe default so the API is never
@@ -74,16 +84,7 @@ DEFAULT_ALLOWED_ORIGINS = [
     "https://lovelaundry-manager.vercel.app",
 
     "https://system-lovelaundry-lk.vercel.app",
-    # Hotel and shop client portals
-    "https://hotel.lovelaundry.lk",
-    "https://shop.lovelaundry.lk",
-    # Linen-room app (staff, but served from its own domain)
-    "https://linen.lovelaundry.lk",
-    # Local development ports for all apps
     "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://localhost:5176",
     "http://localhost:3000",
 ]
 
@@ -126,49 +127,36 @@ apply_security(app, rate_limit=300)
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    request_id = request.headers.get("x-request-id", str(uuid.uuid4())[:16])
-    logger.error(
-        f"Unhandled exception [request_id: {request_id}]",
-        exc_info=exc,
-        extra={"request_id": request_id, "path": request.url.path}
-    )
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "request_id": request_id}
-    )
+    logger.error("Unhandled exception", exc_info=exc)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 from .routers.laundries import router as laundries_router  # noqa: E402
-from .routers.password_reset import router as password_reset_router  # noqa: E402
+from .routers.hotels import router as hotels_router  # noqa: E402
+from .routers.shops import router as shops_router  # noqa: E402
 app.include_router(laundries_router)
+app.include_router(hotels_router)
+app.include_router(shops_router)
 app.include_router(admin_database_router)
-app.include_router(password_reset_router)
 
 
 @app.on_event("startup")
 def startup_event():
-    request_id = str(uuid.uuid4())[:16]
-    logger.info(f"Startup event initiated [request_id: {request_id}]")
-    
     try:
         if DB_TYPE in (DatabaseType.POSTGRESQL, DatabaseType.SQLITE):
             from .database import Base, engine
             if engine:
                 Base.metadata.create_all(bind=engine)
-                logger.info("SQL schema created successfully")
         else:
             ensure_indexes()
-            logger.info("MongoDB indexes ensured successfully")
-    except Exception as e:
-        logger.exception(f"Failed to initialize database schema on startup [request_id: {request_id}]")
-        # Continue startup even if schema init fails
+    except Exception:
+        logger.exception("Failed to initialize database schema on startup")
 
     if not ON_VERCEL:
         try:
             synchronization_service.start_worker()
-            logger.info("Sync worker started successfully")
-        except Exception as e:
-            logger.exception(f"Failed to start sync worker [request_id: {request_id}]")
+        except Exception:
+            logger.exception("Failed to start sync worker")
 
 
 @app.on_event("shutdown")
@@ -309,10 +297,14 @@ def login(payload: LoginPayload, repo: UserRepository = Depends(get_repository))
         # Tenant claims every resource service trusts. Built in one place so
         # login, bootstrap and switching cannot drift.
         **build_claims(user, payload.laundry_id),
+        **build_entity_claims(user, "hotels"),
+        **build_entity_claims(user, "shops"),
     }
 
     user_response = {k: v for k, v in user.items() if k != "password"}
     user_response["laundries"] = effective_memberships(user)
+    user_response["hotels"] = effective_entity_memberships(user, "hotels")
+    user_response["shops"] = effective_entity_memberships(user, "shops")
     user_response["role_id"] = role
     user_response["platform_admin"] = bool(user.get("platform_admin")) or str(
         role
@@ -380,10 +372,14 @@ def bootstrap_first_admin(payload: BootstrapPayload, repo: UserRepository = Depe
         "status": user.get("status"),
         "platform_admin": True,
         **build_claims(user),
+        **build_entity_claims(user, "hotels"),
+        **build_entity_claims(user, "shops"),
     }
     user_response = {k: v for k, v in user.items() if k != "password"}
     user_response["role_id"] = "ADMIN"
     user_response["laundries"] = effective_memberships(user)
+    user_response["hotels"] = effective_entity_memberships(user, "hotels")
+    user_response["shops"] = effective_entity_memberships(user, "shops")
     user_response["platform_admin"] = True
     return {
         "access_token": create_access_token(token_data),
@@ -458,11 +454,54 @@ def get_user(
     return user
 
 
+def _coerce_user_id(user_id: Union[int, str]) -> Union[int, str]:
+    return str(user_id) if DB_TYPE == DatabaseType.MONGODB else int(user_id)
+
+
+def _load_user(repo: UserRepository, user_id: Union[int, str]) -> dict:
+    user = repo.get_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+def _check_admin_target(repo: UserRepository, user_id: Union[int, str], current_user: dict, allow_self: bool = False) -> dict:
+    resolved_id = _coerce_user_id(user_id)
+    target_user = _load_user(repo, resolved_id)
+    target_role = str(target_user.get("role_id") or "").upper()
+    is_target_admin = (
+        target_role in {"ADMIN", "LAUNDRY_ADMIN", "PLATFORM_ADMIN", "HOTEL_ADMIN", "SHOP_ADMIN"}
+        or bool(target_user.get("platform_admin"))
+    )
+    if not is_platform_admin(current_user) and is_target_admin:
+        if not (allow_self and str(current_user.get("user_id")) == str(resolved_id)):
+            raise HTTPException(
+                status_code=403,
+                detail="Only platform administrators can modify administrator accounts",
+            )
+    return target_user
+
+
 @app.post("/users", response_model=UserResponse, status_code=201, dependencies=[Depends(require_role(["ADMIN"]))])
 def create_user(
     payload: UserCreate,
+    current_user: dict = Depends(get_current_user),
     repo: UserRepository = Depends(get_repository),
 ):
+    role = str(payload.role_id or "").strip().upper()
+    if role in {"ADMIN", "LAUNDRY_ADMIN", "PLATFORM_ADMIN", "HOTEL_ADMIN", "SHOP_ADMIN"}:
+        if not is_platform_admin(current_user):
+            if role == "HOTEL_ADMIN":
+                msg = "Only platform administrators can create hotel administrators"
+            elif role == "SHOP_ADMIN":
+                msg = "Only platform administrators can create shop administrators"
+            else:
+                msg = "Only platform administrators can create laundry administrators"
+            raise HTTPException(
+                status_code=403,
+                detail=msg,
+            )
+
     if repo.exists_by_auth_id(payload.auth_id):
         raise HTTPException(status_code=400, detail="Auth ID already exists")
 
@@ -472,22 +511,105 @@ def create_user(
     if payload.employee_id and repo.exists_by_employee_id(payload.employee_id):
         raise HTTPException(status_code=400, detail="Employee ID already exists")
 
-    return repo.create(payload.model_dump())
+    user_dict = payload.model_dump()
+    if role == "PLATFORM_ADMIN":
+        user_dict["platform_admin"] = True
+
+    created = repo.create(user_dict)
+
+    # If laundry_id is specified or caller has an active laundry, grant membership
+    laundry_target = payload.laundry_id
+    if not laundry_target and not is_platform_admin(current_user):
+        try:
+            laundry_target = resolve_laundry_id(current_user)
+        except Exception:
+            pass
+
+    if laundry_target and role != "PLATFORM_ADMIN":
+        slug = normalize_laundry_id(laundry_target)
+        try:
+            from .database.main_db import laundries_collection
+            found = laundries_collection.find_one({"laundry_id": slug})
+            l_name = (found or {}).get("name") or slug
+        except Exception:
+            l_name = slug
+        entries = grant(
+            created,
+            slug,
+            name=l_name,
+            role=role,
+            status=ACTIVE,
+        )
+        repo.update(created["id"], {"laundries": entries})
+        created["laundries"] = entries
+
+    # If hotel_id is specified, grant hotel membership
+    hotel_target = payload.hotel_id
+    if hotel_target and role != "PLATFORM_ADMIN":
+        h_slug = normalize_laundry_id(hotel_target)
+        try:
+            from .database.main_db import hotels_collection
+            found = hotels_collection.find_one({"hotel_id": h_slug})
+            h_name = (found or {}).get("name") or h_slug
+        except Exception:
+            h_name = h_slug
+        hotel_entry = {
+            "id": h_slug,
+            "name": h_name,
+            "role": role if role.startswith("HOTEL_") else "HOTEL_ADMIN",
+            "status": ACTIVE,
+        }
+        existing_hotels = created.get("hotels") or []
+        existing_hotels = [e for e in existing_hotels if e.get("id") != h_slug] + [hotel_entry]
+        repo.update(created["id"], {"hotels": existing_hotels})
+        created["hotels"] = existing_hotels
+
+    # If shop_id is specified, grant shop membership
+    shop_target = payload.shop_id
+    if shop_target and role != "PLATFORM_ADMIN":
+        s_slug = normalize_laundry_id(shop_target)
+        try:
+            from .database.main_db import shops_collection
+            found = shops_collection.find_one({"shop_id": s_slug})
+            s_name = (found or {}).get("name") or s_slug
+        except Exception:
+            s_name = s_slug
+        shop_entry = {
+            "id": s_slug,
+            "name": s_name,
+            "role": role if role.startswith("SHOP_") else "SHOP_ADMIN",
+            "status": ACTIVE,
+        }
+        existing_shops = created.get("shops") or []
+        existing_shops = [e for e in existing_shops if e.get("id") != s_slug] + [shop_entry]
+        repo.update(created["id"], {"shops": existing_shops})
+        created["shops"] = existing_shops
+
+    return created
 
 
 @app.put("/users/{user_id}", response_model=UserResponse, dependencies=[Depends(require_role(["ADMIN"]))])
 def update_user(
     user_id: Union[int, str],
     payload: UserUpdate,
+    current_user: dict = Depends(get_current_user),
     repo: UserRepository = Depends(get_repository),
 ):
-    if DB_TYPE == DatabaseType.MONGODB:
-        user_id = str(user_id)
-    else:
-        user_id = int(user_id)
+    resolved_user_id = _coerce_user_id(user_id)
+    _check_admin_target(repo, resolved_user_id, current_user)
 
-    user = repo.update(user_id, payload.model_dump(exclude_unset=True))
+    if not is_platform_admin(current_user):
+        if payload.role_id and str(payload.role_id).strip().upper() in {"ADMIN", "LAUNDRY_ADMIN", "PLATFORM_ADMIN", "HOTEL_ADMIN", "SHOP_ADMIN"}:
+            raise HTTPException(
+                status_code=403,
+                detail="Only platform administrators can promote users to administrator",
+            )
 
+    update_dict = payload.model_dump(exclude_unset=True)
+    if payload.role_id and str(payload.role_id).strip().upper() == "PLATFORM_ADMIN":
+        update_dict["platform_admin"] = True
+
+    user = repo.update(resolved_user_id, update_dict)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
@@ -560,14 +682,12 @@ async def update_profile(
 def update_password(
     user_id: Union[int, str],
     payload: UserPasswordUpdate,
+    current_user: dict = Depends(get_current_user),
     repo: UserRepository = Depends(get_repository),
 ):
-    if DB_TYPE == DatabaseType.MONGODB:
-        user_id = str(user_id)
-    else:
-        user_id = int(user_id)
-
-    if not repo.update_password(user_id, payload.password):
+    resolved_id = _coerce_user_id(user_id)
+    _check_admin_target(repo, resolved_id, current_user, allow_self=True)
+    if not repo.update_password(resolved_id, payload.password):
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "Password updated successfully"}
 
@@ -576,14 +696,12 @@ def update_password(
 def update_status(
     user_id: Union[int, str],
     payload: UserStatusUpdate,
+    current_user: dict = Depends(get_current_user),
     repo: UserRepository = Depends(get_repository),
 ):
-    if DB_TYPE == DatabaseType.MONGODB:
-        user_id = str(user_id)
-    else:
-        user_id = int(user_id)
-
-    if not repo.update_status(user_id, payload.status):
+    resolved_id = _coerce_user_id(user_id)
+    _check_admin_target(repo, resolved_id, current_user)
+    if not repo.update_status(resolved_id, payload.status):
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "Status updated successfully"}
 
@@ -591,14 +709,12 @@ def update_status(
 @app.delete("/users/{user_id}", dependencies=[Depends(require_role(["ADMIN"]))])
 def delete_user(
     user_id: Union[int, str],
+    current_user: dict = Depends(get_current_user),
     repo: UserRepository = Depends(get_repository),
 ):
-    if DB_TYPE == DatabaseType.MONGODB:
-        user_id = str(user_id)
-    else:
-        user_id = int(user_id)
-
-    if not repo.delete(user_id):
+    resolved_id = _coerce_user_id(user_id)
+    _check_admin_target(repo, resolved_id, current_user)
+    if not repo.delete(resolved_id):
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": "User deleted successfully"}
 # ── Laundry memberships ────────────────────────────────────────────────────────
@@ -630,15 +746,7 @@ class SwitchLaundryResponse(BaseModel):
     laundries: list[dict]
 
 
-def _coerce_user_id(user_id: Union[int, str]) -> Union[int, str]:
-    return str(user_id) if DB_TYPE == DatabaseType.MONGODB else int(user_id)
-
-
-def _load_user(repo: UserRepository, user_id: Union[int, str]) -> dict:
-    user = repo.get_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+# _coerce_user_id and _load_user defined above
 
 
 def _persist_memberships(repo: UserRepository, user_id: Union[int, str], entries: list) -> list:
@@ -695,6 +803,14 @@ def grant_membership(
     status = str(payload.status or ACTIVE).strip().upper()
     if status not in VALID_STATUSES:
         raise HTTPException(status_code=400, detail=f"status must be one of {sorted(VALID_STATUSES)}")
+
+    grant_role = str(payload.role or "").strip().upper()
+    if grant_role in {"ADMIN", "LAUNDRY_ADMIN", "PLATFORM_ADMIN"} and not is_platform_admin(current_user):
+        raise HTTPException(
+            status_code=403,
+            detail="Only platform administrators can grant admin memberships",
+        )
+
     slug = normalize_laundry_id(payload.laundry_id)
     _require_membership_scope(_membership_admin_scope(current_user), slug)
     user = _load_user(repo, _coerce_user_id(user_id))
@@ -743,6 +859,301 @@ def revoke_membership(
     return {"message": "Membership revoked", "laundries": entries}
 
 
+# ── Hotel memberships ────────────────────────────────────────────────────────────
+
+class HotelGrantPayload(BaseModel):
+    hotel_id: str = Field(min_length=1, max_length=32)
+    name: str | None = Field(default=None, max_length=120)
+    role: str | None = Field(default=None, max_length=32)
+    status: str = ACTIVE
+
+
+class HotelStatusPayload(BaseModel):
+    status: str
+
+
+class SwitchHotelPayload(BaseModel):
+    hotel_id: str = Field(min_length=1, max_length=32)
+
+
+class SwitchHotelResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    hotel_id: str
+    hotels: list[dict]
+
+
+def _persist_entity_memberships(repo: UserRepository, user_id: Union[int, str], entity_type: str, entries: list) -> list:
+    update_data = {entity_type: entries}
+    if repo.update(user_id, update_data) is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return entries
+
+
+@app.get("/users/{user_id}/hotels")
+def list_hotel_memberships(
+    user_id: Union[int, str],
+    current_user: dict = Depends(require_role(["ADMIN"])),
+    repo: UserRepository = Depends(get_repository),
+):
+    from .entity_memberships import effective_entity_memberships, stored_entity_memberships
+    user = _load_user(repo, _coerce_user_id(user_id))
+    entries = effective_entity_memberships(user, "hotels")
+    stored_ids = {entry["id"] for entry in stored_entity_memberships(user, "hotels")}
+    return {
+        "user_id": str(user.get("id")),
+        "hotels": entries,
+        "stored": any(entry["id"] in stored_ids for entry in entries),
+    }
+
+
+@app.post("/users/{user_id}/hotels", status_code=201)
+def grant_hotel_membership(
+    user_id: Union[int, str],
+    payload: HotelGrantPayload,
+    current_user: dict = Depends(require_role(["ADMIN", "HOTEL_ADMIN"])),
+    repo: UserRepository = Depends(get_repository),
+):
+    status = str(payload.status or ACTIVE).strip().upper()
+    if status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail=f"status must be one of {sorted(VALID_STATUSES)}")
+
+    caller_role = str(current_user.get("role") or "").upper()
+    grant_role = str(payload.role or "").strip().upper()
+
+    # HOTEL_ADMIN can only grant non-admin roles within their own hotel
+    if caller_role == "HOTEL_ADMIN":
+        caller_hotels = {
+            entry.get("id") for entry in (current_user.get("hotels") or [])
+            if entry.get("status", "").upper() == "ACTIVE"
+        }
+        target_slug = str(payload.hotel_id or "").strip().lower()
+        if target_slug not in caller_hotels:
+            raise HTTPException(
+                status_code=403,
+                detail="Hotel admins can only manage their own hotel",
+            )
+        if grant_role in {"HOTEL_ADMIN"}:
+            raise HTTPException(
+                status_code=403,
+                detail="Only platform administrators can grant hotel admin memberships",
+            )
+    elif grant_role in {"HOTEL_ADMIN"} and not is_platform_admin(current_user):
+        raise HTTPException(
+            status_code=403,
+            detail="Only platform administrators can grant hotel admin memberships",
+        )
+
+    slug = normalize_entity_id(payload.hotel_id)
+    user = _load_user(repo, _coerce_user_id(user_id))
+    entries = grant_entity_membership(
+        user, slug, "hotels", name=payload.name, role=payload.role, status=status
+    )
+    return {"hotels": _persist_entity_memberships(repo, _coerce_user_id(user_id), "hotels", entries)}
+
+
+@app.patch("/users/{user_id}/hotels/{hotel_id}")
+def set_hotel_membership_status(
+    user_id: Union[int, str],
+    hotel_id: str,
+    payload: HotelStatusPayload,
+    current_user: dict = Depends(require_role(["ADMIN"])),
+    repo: UserRepository = Depends(get_repository),
+):
+    status = str(payload.status or "").strip().upper()
+    if status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail=f"status must be one of {sorted(VALID_STATUSES)}")
+    slug = normalize_entity_id(hotel_id)
+    user = _load_user(repo, _coerce_user_id(user_id))
+    entries = grant_entity_membership(user, slug, "hotels", status=status)
+    return {"hotels": _persist_entity_memberships(repo, _coerce_user_id(user_id), "hotels", entries)}
+
+
+@app.delete("/users/{user_id}/hotels/{hotel_id}")
+def revoke_hotel_membership(
+    user_id: Union[int, str],
+    hotel_id: str,
+    current_user: dict = Depends(require_role(["ADMIN"])),
+    repo: UserRepository = Depends(get_repository),
+):
+    slug = normalize_entity_id(hotel_id)
+    user = _load_user(repo, _coerce_user_id(user_id))
+    entries = revoke_entity_membership(user, slug, "hotels")
+    _persist_entity_memberships(repo, _coerce_user_id(user_id), "hotels", entries)
+    return {"message": "Hotel membership revoked", "hotels": entries}
+
+
+@app.post("/auth/switch-hotel", response_model=SwitchHotelResponse)
+def switch_hotel(
+    payload: SwitchHotelPayload,
+    current_user: dict = Depends(get_current_user),
+    repo: UserRepository = Depends(get_repository),
+):
+    """Re-issue this session's token for another hotel the user belongs to."""
+    user = _load_user(repo, current_user.get("user_id"))
+    if str(user.get("status") or "unset").strip().lower() in DISABLED_STATUSES:
+        raise HTTPException(status_code=403, detail="This account is inactive")
+    claims = build_entity_claims(user, "hotels", payload.hotel_id)
+    token_data = {
+        "user_id": user["id"],
+        "auth_id": user["auth_id"],
+        "user_name": user["user_name"],
+        "role": str(user["role_id"]).upper(),
+        "status": user.get("status"),
+        **claims,
+    }
+    return {
+        "access_token": create_access_token(token_data),
+        "token_type": "bearer",
+        "hotel_id": claims["hotel_id"],
+        "hotels": claims["hotels"],
+    }
+
+
+# ── Shop memberships ─────────────────────────────────────────────────────────────
+
+class ShopGrantPayload(BaseModel):
+    shop_id: str = Field(min_length=1, max_length=32)
+    name: str | None = Field(default=None, max_length=120)
+    role: str | None = Field(default=None, max_length=32)
+    status: str = ACTIVE
+
+
+class ShopStatusPayload(BaseModel):
+    status: str
+
+
+class SwitchShopPayload(BaseModel):
+    shop_id: str = Field(min_length=1, max_length=32)
+
+
+class SwitchShopResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    shop_id: str
+    shops: list[dict]
+
+
+@app.get("/users/{user_id}/shops")
+def list_shop_memberships(
+    user_id: Union[int, str],
+    current_user: dict = Depends(require_role(["ADMIN"])),
+    repo: UserRepository = Depends(get_repository),
+):
+    from .entity_memberships import effective_entity_memberships, stored_entity_memberships
+    user = _load_user(repo, _coerce_user_id(user_id))
+    entries = effective_entity_memberships(user, "shops")
+    stored_ids = {entry["id"] for entry in stored_entity_memberships(user, "shops")}
+    return {
+        "user_id": str(user.get("id")),
+        "shops": entries,
+        "stored": any(entry["id"] in stored_ids for entry in entries),
+    }
+
+
+@app.post("/users/{user_id}/shops", status_code=201)
+def grant_shop_membership(
+    user_id: Union[int, str],
+    payload: ShopGrantPayload,
+    current_user: dict = Depends(require_role(["ADMIN", "SHOP_ADMIN"])),
+    repo: UserRepository = Depends(get_repository),
+):
+    status = str(payload.status or ACTIVE).strip().upper()
+    if status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail=f"status must be one of {sorted(VALID_STATUSES)}")
+
+    caller_role = str(current_user.get("role") or "").upper()
+    grant_role = str(payload.role or "").strip().upper()
+
+    # SHOP_ADMIN can only grant non-admin roles within their own shop
+    if caller_role == "SHOP_ADMIN":
+        caller_shops = {
+            entry.get("id") for entry in (current_user.get("shops") or [])
+            if entry.get("status", "").upper() == "ACTIVE"
+        }
+        target_slug = str(payload.shop_id or "").strip().lower()
+        if target_slug not in caller_shops:
+            raise HTTPException(
+                status_code=403,
+                detail="Shop admins can only manage their own shop",
+            )
+        if grant_role in {"SHOP_ADMIN"}:
+            raise HTTPException(
+                status_code=403,
+                detail="Only platform administrators can grant shop admin memberships",
+            )
+    elif grant_role in {"SHOP_ADMIN"} and not is_platform_admin(current_user):
+        raise HTTPException(
+            status_code=403,
+            detail="Only platform administrators can grant shop admin memberships",
+        )
+
+    slug = normalize_entity_id(payload.shop_id)
+    user = _load_user(repo, _coerce_user_id(user_id))
+    entries = grant_entity_membership(
+        user, slug, "shops", name=payload.name, role=payload.role, status=status
+    )
+    return {"shops": _persist_entity_memberships(repo, _coerce_user_id(user_id), "shops", entries)}
+
+
+@app.patch("/users/{user_id}/shops/{shop_id}")
+def set_shop_membership_status(
+    user_id: Union[int, str],
+    shop_id: str,
+    payload: ShopStatusPayload,
+    current_user: dict = Depends(require_role(["ADMIN"])),
+    repo: UserRepository = Depends(get_repository),
+):
+    status = str(payload.status or "").strip().upper()
+    if status not in VALID_STATUSES:
+        raise HTTPException(status_code=400, detail=f"status must be one of {sorted(VALID_STATUSES)}")
+    slug = normalize_entity_id(shop_id)
+    user = _load_user(repo, _coerce_user_id(user_id))
+    entries = grant_entity_membership(user, slug, "shops", status=status)
+    return {"shops": _persist_entity_memberships(repo, _coerce_user_id(user_id), "shops", entries)}
+
+
+@app.delete("/users/{user_id}/shops/{shop_id}")
+def revoke_shop_membership(
+    user_id: Union[int, str],
+    shop_id: str,
+    current_user: dict = Depends(require_role(["ADMIN"])),
+    repo: UserRepository = Depends(get_repository),
+):
+    slug = normalize_entity_id(shop_id)
+    user = _load_user(repo, _coerce_user_id(user_id))
+    entries = revoke_entity_membership(user, slug, "shops")
+    _persist_entity_memberships(repo, _coerce_user_id(user_id), "shops", entries)
+    return {"message": "Shop membership revoked", "shops": entries}
+
+
+@app.post("/auth/switch-shop", response_model=SwitchShopResponse)
+def switch_shop(
+    payload: SwitchShopPayload,
+    current_user: dict = Depends(get_current_user),
+    repo: UserRepository = Depends(get_repository),
+):
+    """Re-issue this session's token for another shop the user belongs to."""
+    user = _load_user(repo, current_user.get("user_id"))
+    if str(user.get("status") or "unset").strip().lower() in DISABLED_STATUSES:
+        raise HTTPException(status_code=403, detail="This account is inactive")
+    claims = build_entity_claims(user, "shops", payload.shop_id)
+    token_data = {
+        "user_id": user["id"],
+        "auth_id": user["auth_id"],
+        "user_name": user["user_name"],
+        "role": str(user["role_id"]).upper(),
+        "status": user.get("status"),
+        **claims,
+    }
+    return {
+        "access_token": create_access_token(token_data),
+        "token_type": "bearer",
+        "shop_id": claims["shop_id"],
+        "shops": claims["shops"],
+    }
+
+
 @app.post("/auth/switch-laundry", response_model=SwitchLaundryResponse)
 def switch_laundry(
     payload: SwitchLaundryPayload,
@@ -761,6 +1172,8 @@ def switch_laundry(
         "role": str(user["role_id"]).upper(),
         "status": user.get("status"),
         **claims,
+        **build_entity_claims(user, "hotels"),
+        **build_entity_claims(user, "shops"),
     }
     return {
         "access_token": create_access_token(token_data),
@@ -793,6 +1206,11 @@ class ClientCreatePayload(BaseModel):
     email: str | None = None
     role: str | None = None
     client_type: str | None = "HOTEL"
+    # Entity association. Supply the hotel or shop this login belongs to; the
+    # side must match client_type. Omitted, it is resolved from client_name
+    # when that laundry has exactly one entity by that name.
+    hotel_id: str | None = None
+    shop_id: str | None = None
     # Platform admins must name the target laundry; tenant admins default to
     # their active one and cannot reach another tenant.
     laundry_id: str | None = None
@@ -850,6 +1268,18 @@ def create_client(
     payload: ClientCreatePayload,
     current_user: dict = Depends(get_current_user),
 ):
+    side = normalize_client_type(payload.client_type or "HOTEL")
+    default_role = "HOTEL_MANAGER" if side == "HOTEL" else "SHOP_STAFF"
+    target_role = normalize_role(payload.role or default_role, side)
+
+    if target_role in {"HOTEL_ADMIN", "SHOP_ADMIN"}:
+        if not is_platform_admin(current_user):
+            admin_type = "hotel" if target_role == "HOTEL_ADMIN" else "shop"
+            raise HTTPException(
+                status_code=403,
+                detail=f"Only platform administrators can create {admin_type} administrators",
+            )
+
     scope = _membership_admin_scope(current_user)
     target = payload.laundry_id or scope or resolve_laundry_id(current_user)
     slug = normalize_laundry_id(target)
@@ -861,8 +1291,10 @@ def create_client(
         user_name=payload.user_name,
         password=payload.password,
         email=payload.email,
-        role=payload.role,
-        client_type=payload.client_type or "HOTEL",
+        role=target_role,
+        client_type=side,
+        hotel_id=payload.hotel_id,
+        shop_id=payload.shop_id,
     )
     return client_public_view(doc)
 
@@ -948,6 +1380,8 @@ def refresh_token(
         "platform_admin": bool(user.get("platform_admin"))
         or role == "PLATFORM_ADMIN",
         **build_claims(user, current_user.get("laundry_id")),
+        **build_entity_claims(user, "hotels", current_user.get("hotel_id")),
+        **build_entity_claims(user, "shops", current_user.get("shop_id")),
     }
     return {"access_token": create_access_token(token_data), "token_type": "bearer"}
 
@@ -1018,18 +1452,34 @@ def create_client_staff(
         email=payload.email,
         role=role,
         client_type=side,
+        # Inherited from the administrator's own token, never the request
+        # body: staff must land in the same hotel/shop as their admin.
+        hotel_id=scope.get("hotel_id"),
+        shop_id=scope.get("shop_id"),
     )
     return client_public_view(doc)
 
 
 @app.get("/client/staff")
 def list_client_staff(session: dict = Depends(get_client_session)):
-    """Everyone enrolled under the caller's own customer account."""
+    """Everyone enrolled under the caller's own customer account.
+
+    Grouped by entity id when the caller has one, because two hotels in the same
+    laundry may legitimately share a display name — grouping by name would show
+    one hotel's staff to the other. Accounts predating entity association fall
+    back to the name match.
+    """
     scope = client_scope_of(session)
-    items = [
-        account
-        for account in list_client_accounts(scope["laundry_id"])
-        if str(account.get("client_name")) == scope["client_name"]
-        and str(account.get("client_type", "")).upper() == scope["client_type"]
-    ]
-    return {"items": items, "total": len(items)}
+    entity_id = scope.get("hotel_id") or scope.get("shop_id")
+    field = "hotel_id" if scope["client_type"] == "HOTEL" else "shop_id"
+
+    items = []
+    for account in list_client_accounts(scope["laundry_id"]):
+        if str(account.get("client_type", "")).upper() != scope["client_type"]:
+            continue
+        if entity_id:
+            if str(account.get(field) or "") == entity_id:
+                items.append(account)
+        elif str(account.get("client_name")) == scope["client_name"]:
+            items.append(account)
+    return {"items": items, "total": len(items), field: entity_id or None}

@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timezone, timedelta
-from typing import List, Optional
+from typing import Dict, List, Optional
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -24,6 +24,7 @@ from ..database.main_db import (
 from ..repositories.main_repository import bump_version, enqueue_sync
 from ..services import idempotency
 from ..services import balance_engine as be
+from ..services.operations_context import source_filter
 from ..services.hotel_code import format_bill_number
 from ..services.transaction_events import build_item_delta, record_event, EVENT_BILL_CREATED
 from ..services.verification_service import attach_verification_to
@@ -58,9 +59,8 @@ def _serialize(doc: dict) -> dict:
     try:
         decrypted = decrypt_dict(doc, SENSITIVE_FIELDS)
     except Exception as e:
-        logger.error(f"Failed to decrypt document: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to decrypt document"
+            status_code=500, detail=f"Failed to decrypt document: {str(e)}"
         )
 
     decrypted["id"] = str(decrypted["_id"])
@@ -112,9 +112,8 @@ def _serialize_payment(doc: dict) -> dict:
     try:
         decrypted = decrypt_dict(doc, PAYMENT_SENSITIVE_FIELDS)
     except Exception as e:
-        logger.error(f"Failed to decrypt payment: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500, detail=f"Failed to decrypt payment"
+            status_code=500, detail=f"Failed to decrypt payment: {str(e)}"
         )
     decrypted["id"] = str(decrypted["_id"])
     del decrypted["_id"]
@@ -131,14 +130,9 @@ async def _owned_bill(bill_id: str, current_user: dict):
 
 
 def _parse_object_id(bill_id: str) -> ObjectId:
-    if not bill_id or not isinstance(bill_id, str):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid bill ID format"
-        )
     try:
         return ObjectId(bill_id)
     except InvalidId:
-        logger.warning(f"Invalid ObjectId attempted: {bill_id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid bill ID"
         )
@@ -152,11 +146,6 @@ async def log_audit(
     details: dict = None,
     laundry_id: str | None = None,
 ):
-    """Log audit event with validation and error handling."""
-    if not user_id or not action or not entity or not entity_id:
-        logger.warning(f"Skipping audit log with missing required fields: user_id={user_id}, action={action}, entity={entity}, entity_id={entity_id}")
-        return
-    
     # One writer, one schema — see router_utils.log_audit (canonical keys plus
     # the legacy aliases the report UI renders).
     from ..router_utils import log_audit as canonical_log_audit
@@ -526,8 +515,6 @@ async def create_bill(
         # Derive billable items from the gate pass RECEIVED quantities,
         # minus whatever has already been billed for the pass (GP-leg bills
         # reference gate_pass_id; delivery-leg bills reference its deliveries).
-        from ..services.operations_context import source_filter
-
         gp_del_ids = []
         gp_del_cursor = deliveries_collection.find(
             {**source_filter(payload.gate_pass_id), "status": {"$ne": "CANCELLED"}}

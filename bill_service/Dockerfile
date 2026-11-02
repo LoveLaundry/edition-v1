@@ -7,8 +7,7 @@ ENV TZ=Asia/Colombo \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    HOME=/var/www \
-    PYTHONHASHSEED=random
+    HOME=/var/www
 
 RUN addgroup --system app && adduser --system --ingroup app app \
     && mkdir -p /var/www && chown -R app:app /var/www
@@ -16,9 +15,7 @@ RUN addgroup --system app && adduser --system --ingroup app app \
 WORKDIR /srv
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r requirements.txt \
-    && rm -rf /root/.cache/pip
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src ./src
 COPY .env.example ./.env.example
@@ -41,4 +38,4 @@ USER app
 EXPOSE 8000
 
 ENTRYPOINT ["/usr/local/bin/run"]
-CMD ["uvicorn", "src.bill_service.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--log-level", "info"]
+CMD ["uvicorn", "src.bill_service.main:app", "--host", "0.0.0.0", "--port", "8000"]

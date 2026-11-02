@@ -1,6 +1,5 @@
 import asyncio
 import traceback
-import uuid
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -35,11 +34,8 @@ import logging
 import os
 import sentry_sdk
 
-# Configure logging first with structured format
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - [%(request_id)s]'
-)
+# Configure logging first
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # CORS configuration
@@ -83,7 +79,6 @@ apply_security(app, rate_limit=300, origins=origins)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    request_id = request.headers.get("x-request-id", str(uuid.uuid4())[:16])
     origin = request.headers.get("origin", "")
     cors_headers = {}
     if origin in ALLOWED_ORIGINS:
@@ -92,27 +87,19 @@ async def global_exception_handler(request: Request, exc: Exception):
             "Access-Control-Allow-Credentials": "true",
             "Access-Control-Allow-Methods": "*",
             "Access-Control-Allow-Headers": "*",
-            "X-Request-Id": request_id,
         }
 
     if isinstance(exc, HTTPException):
-        logger.warning(
-            f"HTTPException: {exc.status_code} - {exc.detail}",
-            extra={"request_id": request_id, "path": request.url.path}
-        )
         return JSONResponse(
             status_code=exc.status_code,
-            content={"detail": exc.detail, "request_id": request_id},
+            content={"detail": exc.detail},
             headers=cors_headers,
         )
 
-    logger.error(
-        f"Unhandled exception: {exc}\n{traceback.format_exc()}",
-        extra={"request_id": request_id, "path": request.url.path}
-    )
+    logger.error(f"Unhandled exception: {exc}\n{traceback.format_exc()}")
     return JSONResponse(
         status_code=500,
-        content={"detail": "Internal server error. Please try again later.", "request_id": request_id},
+        content={"detail": "Internal server error. Please try again later."},
         headers=cors_headers,
     )
 
@@ -143,20 +130,14 @@ _sync_task: asyncio.Task | None = None
 
 @app.on_event("startup")
 async def startup_event():
-    request_id = str(uuid.uuid4())[:16]
-    logger.info(f"Startup event initiated [request_id: {request_id}]")
-    
     try:
         await ensure_indexes()
-        logger.info("MongoDB indexes ensured successfully")
-    except Exception as e:
-        logger.exception(f"Failed to ensure MongoDB indexes on startup [request_id: {request_id}]")
-        # Continue startup even if index creation fails - indexes can be created later
+    except Exception:
+        logger.exception("Failed to ensure MongoDB indexes on startup")
 
     if settings.sync_enabled and not ON_VERCEL:
         global _sync_task
         _sync_task = asyncio.create_task(synchronization_service.run_worker())
-        logger.info("Sync worker started")
 
 
 @app.on_event("shutdown")

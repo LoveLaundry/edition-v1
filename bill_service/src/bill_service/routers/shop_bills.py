@@ -1513,7 +1513,8 @@ async def remove_item(
 async def stats_overview(
     current_user: dict = Depends(require_capability("bill:read")),
 ):
-    pipeline = [match_stage(resolve_laundry_id(current_user)),
+    lid = resolve_laundry_id(current_user)
+    pipeline = [match_stage(lid),
         {
             "$group": {
                 "_id": None,
@@ -1528,7 +1529,9 @@ async def stats_overview(
     r = result[0] if result else {"total_bills": 0, "total_revenue": 0, "total_paid": 0, "total_outstanding": 0}
 
     status_counts = {}
-    async for doc in shop_bills_collection.aggregate([{"$group": {"_id": "$status", "count": {"$sum": 1}}}]):
+    async for doc in shop_bills_collection.aggregate(
+        [match_stage(lid), {"$group": {"_id": "$status", "count": {"$sum": 1}}}]
+    ):
         status_counts[doc["_id"]] = doc["count"]
 
     return {
@@ -1760,10 +1763,6 @@ async def bulk_delete(
     for bid in bill_ids:
         raw = await shop_bills_collection.find_one({"_id": parse_object_id(bid, "Bill ID")})
         if not raw:
-            continue
-        try:
-            assert_same_laundry(raw, _bulk_laundry, "Shop bill")
-        except HTTPException:
             continue
         try:
             assert_same_laundry(raw, laundry_id, "Shop bill")

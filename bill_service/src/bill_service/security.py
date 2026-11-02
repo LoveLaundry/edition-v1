@@ -12,14 +12,11 @@ import re
 import hashlib
 import ipaddress
 import uuid
-import logging
 from typing import Optional
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-
-logger = logging.getLogger(__name__)
 
 # A client-supplied correlation id is echoed back in `X-Request-Id`. It is
 # attacker-controlled, so it is only trusted when it matches this shape —
@@ -34,32 +31,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "no-referrer"
-        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        # Content Security Policy - restricts sources for scripts, styles, images, etc.
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' data:; "
-            "connect-src 'self'; "
-            "frame-ancestors 'none'; "
-            "form-action 'self'; "
-            "base-uri 'self'; "
-            "require-trusted-types-for 'script'"
-        )
         # HSTS is only honoured over TLS; sending it on a plain-HTTP response
         # is meaningless and locks out local development behind HTTPS.
         if _is_https(request):
             response.headers["Strict-Transport-Security"] = (
-                "max-age=31536000; includeSubDomains; preload"
+                "max-age=31536000; includeSubDomains"
             )
         response.headers["X-Request-Id"] = _resolve_request_id(request)
-        # Cache control for sensitive endpoints
-        if request.url.path in ["/auth/login", "/auth/refresh", "/client/auth/login"]:
-            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, private"
-            response.headers["Pragma"] = "no-cache"
         return response
 
 
@@ -92,10 +72,6 @@ def _resolve_request_id(request: Request) -> str:
 class RateLimitMiddleware(BaseHTTPMiddleware):
     def __init__(self, app, requests_per_minute: int = 300):
         super().__init__(app)
-        if requests_per_minute < 1:
-            raise ValueError("requests_per_minute must be at least 1")
-        if requests_per_minute > 10000:
-            raise ValueError("requests_per_minute must not exceed 10000")
         self.limit = requests_per_minute
         self._buckets: dict[str, list[float]] = {}
         self._last_prune = time.time()
@@ -114,12 +90,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     pruned[bucket_key] = live
             self._buckets = pruned
             self._last_prune = now
-            logger.debug(f"Rate limit pruned {len(self._buckets)} active buckets")
         hits = [t for t in self._buckets.get(key, []) if t >= window_start]
         self._buckets[key] = hits
         if len(hits) >= self.limit:
             retry_after = max(1, int(60.0 - (now - min(hits))))
-            logger.warning(f"Rate limit exceeded for {key}: {len(hits)}/{self.limit}")
             return JSONResponse(
                 status_code=429,
                 content={"detail": "Rate limit exceeded — try again shortly."},

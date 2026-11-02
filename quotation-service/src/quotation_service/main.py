@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from typing import Union
 from datetime import datetime
 from sqlalchemy import text
-import uuid
 
 from .app_time import utc_iso_z
 from .config import DB_TYPE, DatabaseType
@@ -21,9 +20,9 @@ from .schemas import (
     ORDER_STATUS_TRANSITIONS,
 )
 from .auth_helper import get_current_user, require_role
-from .tenancy import resolve_laundry_id, assert_same_laundry
 from .security import apply_security
 from .tenant_scope import TenantClaimsMiddleware, insecure_flags
+from .tenancy import assert_same_laundry, resolve_laundry_id, validate_entity_association
 from .database.main_db import ensure_indexes
 from .database.connection_manager import close_all
 from .routers.admin_database import router as admin_database_router
@@ -35,11 +34,8 @@ import logging
 import os
 import sentry_sdk
 
-# Configure logging first with structured format
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s - [%(request_id)s]'
-)
+# Configure logging first
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Known production frontend origins. Used as a safe default so the API is never
@@ -114,16 +110,8 @@ app.add_middleware(TenantClaimsMiddleware)
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    request_id = request.headers.get("x-request-id", str(uuid.uuid4())[:16])
-    logger.error(
-        f"Unhandled exception [request_id: {request_id}]",
-        exc_info=exc,
-        extra={"request_id": request_id, "path": request.url.path}
-    )
-    return JSONResponse(
-        status_code=500,
-        content={"detail": "Internal server error", "request_id": request_id}
-    )
+    logger.error("Unhandled exception", exc_info=exc)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 app.include_router(admin_database_router)
@@ -133,23 +121,17 @@ app.include_router(chat_router)
 @app.on_event("startup")
 def startup_event():
     """Initialize database schema on startup"""
-    request_id = str(uuid.uuid4())[:16]
-    logger.info(f"Startup event initiated [request_id: {request_id}]")
-    
     try:
         if DB_TYPE in (DatabaseType.POSTGRESQL, DatabaseType.SQLITE):
             from .database import Base, engine
 
             if engine:
                 Base.metadata.create_all(bind=engine)
-                logger.info("SQL schema created successfully")
             _migrate_quotation_schema()
         else:
             ensure_indexes()
-            logger.info("MongoDB indexes ensured successfully")
-    except Exception as e:
-        logger.exception(f"Failed to initialize database schema on startup [request_id: {request_id}]")
-        # Continue startup even if schema init fails
+    except Exception:
+        logger.exception("Failed to initialize database schema on startup")
 
     # The sync worker (MAIN -> SECONDARY replication) must run for every
     # database backend. It used to live inside _migrate_quotation_schema,
@@ -160,9 +142,8 @@ def startup_event():
     if not ON_VERCEL:
         try:
             synchronization_service.start_worker()
-            logger.info("Sync worker started successfully")
-        except Exception as e:
-            logger.exception(f"Failed to start sync worker [request_id: {request_id}]")
+        except Exception:
+            logger.exception("Failed to start sync worker")
 
 
 def _sqlite_column_exists(conn, table: str, column: str) -> bool:
@@ -325,6 +306,13 @@ def create_quotation(
             detail=f"Status must be one of {ORDER_STATUSES}",
         )
 
+    entity = validate_entity_association(
+        tag=payload.tag,
+        hotel_id=payload.hotel_id,
+        shop_id=payload.shop_id,
+        laundry_id=lid,
+    )
+
     quotation_data = {
         "client_name": payload.client_name,
         "quotation_title": payload.quotation_title,
@@ -339,6 +327,7 @@ def create_quotation(
             }
         ],
         "tag": payload.tag,
+        **entity,
     }
 
     new_quotation = repo.create(quotation_data, laundry_id=lid)
@@ -369,6 +358,47 @@ def update_quotation(
         raise HTTPException(status_code=404, detail="Quotation not found")
 
     update_data = payload.model_dump(exclude_unset=True)
+
+    # Re-validate the entity association whenever the tag or an entity id is
+    # being changed.
+    if {"tag", "hotel_id", "shop_id"} & set(update_data):
+        old_tag = str(current.get("tag") or "shop").strip().lower()
+        new_tag = str(update_data.get("tag") or old_tag).strip().lower()
+        tag_changed = new_tag != old_tag
+
+        # An id supplied in THIS request, as opposed to one inherited from the
+        # stored record. `key in update_data` distinguishes "not sent" from
+        # "sent as null", which is how a caller clears an association.
+        request_hotel = update_data.get("hotel_id")
+        request_shop = update_data.get("shop_id")
+        entity_supplied = bool(
+            ("hotel_id" in update_data and request_hotel)
+            or ("shop_id" in update_data and request_shop)
+        )
+
+        if tag_changed and not entity_supplied:
+            # The stored association belongs to the old side and cannot survive
+            # a side change. Clearing beats rejecting: flipping a mis-tagged
+            # quotation is a legitimate correction.
+            update_data["hotel_id"] = None
+            update_data["shop_id"] = None
+        else:
+            entity = validate_entity_association(
+                tag=new_tag,
+                hotel_id=request_hotel
+                if "hotel_id" in update_data
+                else current.get("hotel_id"),
+                shop_id=request_shop
+                if "shop_id" in update_data
+                else current.get("shop_id"),
+                laundry_id=lid,
+            )
+            # Write both fields so the abandoned side is cleared rather than
+            # left stale beside the new association.
+            update_data["hotel_id"] = entity.get("hotel_id")
+            update_data["shop_id"] = entity.get("shop_id")
+
+        update_data["tag"] = new_tag
 
     if "line_items" in update_data and update_data["line_items"]:
         update_data["line_items"] = [
