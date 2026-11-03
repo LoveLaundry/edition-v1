@@ -19,7 +19,6 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'es2022',
     rollupOptions: {
       output: {
         manualChunks(id: string) {
@@ -31,9 +30,5 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'axios'],
   },
 })

@@ -6,9 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "type-check": "tsc --noEmit",
-    "lint": "echo 'Linting not configured - add eslint for production'"
+    "preview": "vite preview"
   },
   "dependencies": {
     "axios": "^1.19.0",
@@ -25,9 +23,5 @@
     "tailwindcss": "^4.3.3",
     "typescript": "~6.0.2",
     "vite": "^8.2.0"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
   }
 }
